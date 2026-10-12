@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Talent Mobility & Growth — Full UI Design Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #0B3D91;
+      --primary-subtle: #E8EEF7;
+      --bg: #F4F6F9;
+      --surface: #fff;
+      --border: #D8DEE6;
+      --text: #1A1D21;
+      --text-2: #5C6570;
+      --muted: #8B939C;
+      --sidebar: #0F1724;
+      --sw: 220px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, system-ui, sans-serif; background: #e8eaed; color: var(--text); font-size: 11px; }
+    @media print { body { background: #fff; } .no-print { display: none; } }
+    @page { size: A4 landscape; margin: 8mm; }
+
+    .catalog-cover {
+      min-height: 185mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px 64px;
+      background: linear-gradient(135deg, #0B3D91 0%, #0F1724 100%);
+      color: #fff;
+      page-break-after: always;
+    }
+    .catalog-cover h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px; }
+    .catalog-cover p { font-size: 16px; opacity: 0.9; max-width: 520px; line-height: 1.5; }
+    .catalog-cover .meta { margin-top: 48px; font-size: 13px; opacity: 0.75; }
+    .catalog-cover .pill { display: inline-block; margin-top: 24px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; font-size: 12px; }
+
+    .pdf-sheet {
+      page-break-after: always;
+      page-break-inside: avoid;
+      padding: 0 0 8px;
+      margin-bottom: 4px;
+    }
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+    .sheet-header h2 { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .sheet-header span { font-size: 10px; color: var(--muted); }
+
+    .frame {
+      width: 100%;
+      height: 178mm;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      transform-origin: top left;
+    }
+
+    .login-split { display: flex; width: 100%; height: 100%; }
+    .login-brand {
+      width: 42%;
+      background: var(--primary);
+      color: #fff;
+      padding: 40px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .login-brand h3 { font-size: 22px; margin-bottom: 12px; }
+    .login-brand p { font-size: 12px; opacity: 0.85; line-height: 1.6; }
+    .login-form {
+      flex: 1;
+      background: var(--surface);
+      padding: 48px 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .login-form h3 { font-size: 20px; margin-bottom: 8px; }
+    .login-form .sub { color: var(--text-2); margin-bottom: 28px; font-size: 12px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 500; margin-bottom: 6px; }
+    .field input {
+      width: 100%;
+      max-width: 360px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+    .btn-p {
+      height: 40px;
+      padding: 0 20px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .login-foot { margin-top: 24px; font-size: 10px; color: var(--muted); }
+
+    .shell { display: flex; width: 100%; height: 100%; }
+    .sb {
+      width: var(--sw);
+      background: var(--sidebar);
+      color: #C5CDD8;
+      padding: 16px 12px;
+      flex-shrink: 0;
+      font-size: 10px;
+    }
+    .sb .brand { color: #fff; font-weight: 700; font-size: 11px; }
+    .sb .sub { color: #6B7280; font-size: 9px; margin: 4px 0 16px; }
+    .sb .grp { text-transform: uppercase; letter-spacing: 0.05em; color: #6B7280; font-size: 8px; margin: 12px 0 4px 8px; }
+    .sb .ni { padding: 7px 10px; border-radius: 4px; margin-bottom: 1px; }
+    .sb .ni.on { background: rgba(255,255,255,0.1); color: #fff; font-weight: 500; }
+    .sb .ni.future { opacity: 0.55; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .tb {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10px;
+    }
+    .tb .bc { color: var(--text-2); }
+    .tb .uc { display: flex; align-items: center; gap: 8px; }
+    .av { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .av img { width: 100%; height: 100%; object-fit: cover; }
+    .ct { padding: 20px 24px; flex: 1; overflow: hidden; }
+    .ct h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+    .ct .lead { color: var(--text-2); font-size: 11px; margin-bottom: 16px; max-width: 480px; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .stat .v { font-size: 18px; font-weight: 700; color: var(--primary); }
+    .stat .l { font-size: 9px; color: var(--text-2); margin-top: 4px; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 72px;
+    }
+    .card h4 { font-size: 12px; margin-bottom: 4px; }
+    .card p { font-size: 9px; color: var(--text-2); }
+    .card.sel { border: 2px solid var(--primary); background: var(--primary-subtle); }
+
+    .chip { display: inline-block; background: var(--primary-subtle); color: var(--primary); padding: 4px 10px; border-radius: 999px; font-size: 9px; font-weight: 500; margin-right: 6px; }
+    .stepper { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 9px; }
+    .sd { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .sd.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .sl { width: 32px; height: 2px; background: var(--border); }
+
+    table.tbl { width: 100%; border-collapse: collapse; font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .tbl th, .tbl td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .tbl th { background: #f8f9fb; font-weight: 600; color: var(--text-2); font-size: 9px; text-transform: uppercase; }
+
+    .banner {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      color: var(--text-2);
+      font-size: 11px;
+    }
+    .banner strong { display: block; color: var(--text); margin-bottom: 6px; font-size: 12px; }
+
+    .wfoot {
+      margin-top: auto;
+      padding: 10px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn-s { height: 32px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 10px; }
+    .prog { height: 6px; background: var(--border); border-radius: 3px; margin: 12px 0; }
+    .prog > div { height: 100%; width: 30%; background: var(--primary); border-radius: 3px; }
+    .opt { border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 6px; font-size: 10px; background: #fff; }
+    .opt.on { border-color: var(--primary); background: var(--primary-subtle); }
+    .score { text-align: center; padding: 24px; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+    .score .big { font-size: 32px; font-weight: 700; color: var(--primary); }
+
+    .profile-grid { display: grid; grid-template-columns: 140px 1fr; gap: 20px; }
+    .profile-photo { width: 120px; height: 120px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 10px; }
+    .kv div span { display: block; color: var(--muted); font-size: 9px; margin-bottom: 2px; }
+
+    .weights { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .wbox { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .wbox .pct { font-size: 22px; font-weight: 700; color: var(--primary); }
+
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+    .badge-ok { background: #E6F4EE; color: #0F7B4D; }
+    .badge-bad { background: #FDECEC; color: #B42318; }
+    .badge-pend { background: #FEF3E2; color: #B45309; }
+    .qblock {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .qblock h4 { font-size: 11px; margin-bottom: 8px; font-weight: 600; }
+    .ans-row { font-size: 10px; margin-top: 4px; color: var(--text-2); }
+    .ans-row strong { color: var(--text); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 560px; margin-bottom: 12px; }
+    .form-row .field input, .form-row .field select {
+      max-width: 100%;
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 11px;
+    }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; max-width: 480px; }
+    .card.hl { border: 2px solid var(--primary); background: var(--primary-subtle); }
+
+    .toc {
+      page-break-after: always;
+      padding: 32px 48px;
+      min-height: 180mm;
+    }
+    .toc h2 { font-size: 18px; margin-bottom: 20px; color: var(--primary); }
+    .toc ol { columns: 2; font-size: 11px; line-height: 1.8; padding-left: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="catalog-cover">
+  <div class="pill">UI Design Catalog · Phase 1</div>
+  <h1>Talent Mobility &amp; Growth</h1>
+  <p>Complete visual reference: assessment wizard, manager manual test assignment, full per-attempt question history (correct / incorrect answers persisted in SQL Server), dashboards, and talent matching.</p>
+  <div class="meta">TO THE NEW · Internal platform · React + ASP.NET Core · SQL Server<br />Generated for stakeholder review — screen layouts at desktop scale</div>
+</div>
+
+<div class="toc pdf-sheet">
+  <h2>Screen index</h2>
+  <ol>
+    <li>Login</li>
+    <li>Employee — Dashboard</li>
+    <li>New Test — Step 1 Competency</li>
+    <li>New Test — Step 2 Technology</li>
+    <li>New Test — Step 3 Skill level</li>
+    <li>New Test — Summary intro</li>
+    <li>New Test — Question (in progress)</li>
+    <li>New Test — Results</li>
+    <li>Test History</li>
+    <li>Profile</li>
+    <li>Skills (planned)</li>
+    <li>Opportunities (planned)</li>
+    <li>Analytics</li>
+    <li>Manager — Dashboard</li>
+    <li>Team roster</li>
+    <li>Team assessments</li>
+    <li>Talent search (planned)</li>
+    <li>Candidate matching</li>
+    <li>Matching configuration</li>
+    <li>Audit history</li>
+    <li>Configurations (hub)</li>
+    <li>Configuration — Manual test assignment</li>
+    <li>Manager — Assign test to employee</li>
+    <li>Employee — Assigned tests inbox</li>
+    <li>Test results — answer review summary</li>
+    <li>Test detail history — all Q&amp;A (employee)</li>
+    <li>Test detail history — all Q&amp;A (manager)</li>
+    <li>Data model — attempt question persistence</li>
+  </ol>
+</div>
+
+<!-- 01 Login -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>01 — Login</h2><span>Employee &amp; Manager · Manual auth (Phase 1) → Google SSO later</span></div>
+  <div class="frame">
+    <div class="login-split">
+      <div class="login-brand">
+        <h3>Talent Mobility &amp; Growth</h3>
+        <p>Connect skills, assessments, internal opportunities, and career growth in one trusted platform for TO THE NEW.</p>
+      </div>
+      <div class="login-form">
+        <h3>Sign in</h3>
+        <p class="sub">Use your @tothenew.com work account</p>
+        <div class="field"><label>Email</label><input type="text" value="amol.belekar@tothenew.com" readonly /></div>
+        <div class="field"><label>Password</label><input type="password" value="••••••••" readonly /></div>
+        <button type="button" class="btn-p">Sign in</button>
+        <p class="login-foot">Phase 1: seeded users · Future: Google Workspace SSO + HRIS profile sync</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 Employee Dashboard -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>02 — Employee Dashboard</h2><span>Default landing after login</span></div>
+  <div class="frame shell">
+    <aside class="sb">
+      <div class="brand">TO THE NEW</div>
+      <div class="sub">Talent Mobility &amp; Growth</div>
+      <div class="grp">Home</div><div class="ni on">Dashboard</div>
+      <div class="grp">Assessment</div><div class="ni">New Test</div><div class="ni">Test History</div>
+      <div class="grp">My talent</div><div class="ni">Profile</div><div class="ni">Skills</div>
+      <div class="grp">Mobility</div><div class="ni future">Opportunities</div><div class="ni future">Applications</div>
+      <div class="grp">Insights</div><div class="ni">Analytics</div>
+    </aside>
+    <div class="main">
+      <div class="tb"><span class="bc">Home › <strong>Dashboard</strong></span>
+        <div class="uc"><span>Amol S. Belekar · .NET</span><div class="av"><img src="https://newersworld-sf-static.tothenew.net/prod/profilePicFolder/c0237ac7-e6ec-42ab-abe8-e2daf4ec9a34_Amol-Sambhaji-Belekar-Profile-Pitcure.jpeg" alt="" /></div></div>
+      </div>
+      <div class="ct">
+        <h1>Good morning, Amol</h1>
+        <p class="lead">Your competency: <span class="chip">.NET</span> Beach · Associate Technical Lead</p>
+        <div class="stats">
+          <div class="stat"><div class="v">3</div><div class="l">Tests completed</div></div>
+          <div class="stat"><div class="v">78%</div><div class="l">Latest score</div></div>
+          <div class="stat"><div class="v">Intermediate</div><div class="l">Last skill level</div></div>
+          <div class="stat"><div class="v">EF Core</div><div class="l">Last technology</div></div>
+        </div>
+        <div class="cards">
+          <div class="card"><h4>Start new assessment</h4><p>Competency → Technology → Skill level</p></div>
+          <div class="card"><h4>View test history</h4><p>All past attempts and scores</p></div>
+          <div class="card"><h4>Update profile</h4><p>Synced from NewersWorld (future)</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 Step 1 -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>03 — New Test · Competency</h2><span>Step 1 of 3</span></div>
+  <div class="frame shell">
+    <aside class="sb"><div class="brand">TO THE NEW</div><div class="grp">Assessment</div><div class="ni on">New Test</div></aside>
+    <div class="main">
+      <div class="tb"><span class="bc">Assessment › New test</span><div class="uc"><div class="av">AB</div></div></div>
+      <div class="ct">
+        <div class="stepper"><div class="sd on">1</div> Competency <div class="sl"></div><div class="sd">2</div> Technology <div class="sl"></div><div class="sd">3</div> Skill level</div>
+        <h1>Choose competency</h1>
+        <p class="lead">Select the primary stack for this assessment.</p>
+        <div class="cards">
+          <div class="card sel"><h4>.NET</h4><p>Microsoft stack &amp; cloud</p></div>
+          <div class="card"><h4>JavaScript</h4><p>Front-end &amp; Node</p></div>
+          <div class="card"><h4>Android</h4><p>Mobile engineering</p></div>
+          <div class="card"><h4>Java</h4><p>Spring ecosystem</p></div>
+          <div class="card"><h4>DevOps</h4><p>Pipelines &amp; infra</p></div>
+          <div class="card"><h4>QA</h4><p>Test automation</p></div>
+        </div>
+      </div>
+      <div class="wfoot"><button class="btn-s">Back</button><button class="btn-p" style="height:32px;font-size:10px;">Next</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 Step 2 -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>04 — New Test · Technology</h2><span>Filtered by .NET</span></div>
+  <div class="frame shell">
+    <aside class="sb"><div class="ni on">New Test</div></aside>
+    <div class="main">
+      <div class="tb"><span class="bc">Assessment › New test</span></div>
+      <div class="ct">
+        <div class="stepper"><div class="sd on" style="background:var(--primary-subtle);color:var(--primary);border-color:var(--primary);">✓</div><div class="sd on">2</div> Technology <div class="sl"></div><div class="sd">3</div></div>
+        <span class="chip">.NET</span>
+        <h1>Choose technology</h1>
+        <p class="lead">Single focus area for AI question generation.</p>
+        <div class="cards" style="grid-template-columns:repeat(4,1fr);">
+          <div class="card"><h4>OOPS</h4></div><div class="card sel"><h4>EF Core</h4></div><div class="card"><h4>ASP.NET Core</h4></div><div class="card"><h4>C#</h4></div>
+          <div class="card"><h4>React</h4></div><div class="card"><h4>Azure</h4></div><div class="card"><h4>CI/CD</h4></div><div class="card"><h4>SQL Server</h4></div>
+        </div>
+      </div>
+      <div class="wfoot"><button class="btn-s">Back</button><button class="btn-p" style="height:32px;font-size:10px;">Next</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 05 Step 3 -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>05 — New Test · Skill level</h2><span>Beginner · Intermediate · Advance</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <span class="chip">.NET</span><span class="chip">EF Core</span>
+        <h1>Choose skill level</h1>
+        <div class="cards">
+          <div class="card"><h4>Beginner</h4><p>Foundational concepts</p></div>
+          <div class="card sel"><h4>Intermediate</h4><p>Applied delivery scenarios</p></div>
+          <div class="card"><h4>Advance</h4><p>Tradeoffs &amp; production depth</p></div>
+        </div>
+      </div>
+      <div class="wfoot"><button class="btn-s">Back</button><button class="btn-p" style="height:32px;font-size:10px;">Continue</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 Intro -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>06 — New Test · Ready to start</h2></div>
+  <div class="frame" style="align-items:center;justify-content:center;padding:40px;">
+    <div style="max-width:420px;width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:28px;">
+      <h1 style="font-size:18px;margin-bottom:16px;">Assessment summary</h1>
+      <div class="kv">
+        <div><span>Competency</span>.NET</div><div><span>Technology</span>EF Core</div>
+        <div><span>Skill level</span>Intermediate</div><div><span>Questions</span>10 · ~15 min</div>
+      </div>
+      <button class="btn-p" style="width:100%;margin-top:20px;">Begin test</button>
+    </div>
+  </div>
+</div>
+
+<!-- 07 Question -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>07 — New Test · In progress</h2><span>Question 3 of 10</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct" style="max-width:640px;">
+        <span class="chip">.NET</span><span class="chip">EF Core</span><span class="chip">Intermediate</span>
+        <div class="prog"><div></div></div>
+        <p style="font-size:13px;font-weight:500;margin-bottom:12px;">When configuring relationships in EF Core, which approach ensures delete behavior is explicitly defined?</p>
+        <div class="opt on">Fluent API OnDelete(DeleteBehavior.Restrict)</div>
+        <div class="opt">Rely on database cascade defaults</div>
+        <div class="opt">Data annotations only on navigations</div>
+        <div class="opt">Skip relationship configuration</div>
+      </div>
+      <div class="wfoot"><button class="btn-s">Previous</button><button class="btn-p" style="height:32px;font-size:10px;">Next</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 08 Results -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>08 — New Test · Results &amp; review</h2><span>Post-submit · all answers saved to DB</span></div>
+  <div class="frame" style="padding:20px 24px;flex-direction:column;">
+    <div style="display:flex;gap:16px;margin-bottom:12px;">
+      <div class="score" style="flex:0 0 200px;padding:16px;">
+        <div class="big" style="font-size:26px;">7 / 10</div>
+        <p style="color:var(--text-2);font-size:10px;margin-top:6px;">70% correct</p>
+        <p style="margin-top:10px;"><span class="badge badge-ok">7 correct</span> <span class="badge badge-bad">3 incorrect</span></p>
+      </div>
+      <div style="flex:1;font-size:10px;">
+        <p class="lead" style="margin-bottom:8px;">.NET · EF Core · Intermediate · Attempt #ATT-2026-1042</p>
+        <div class="qblock">
+          <h4>Q1 <span class="badge badge-ok">Correct</span></h4>
+          <p>Your answer: Fluent API OnDelete configuration</p>
+        </div>
+        <div class="qblock">
+          <h4>Q2 <span class="badge badge-bad">Incorrect</span></h4>
+          <p class="ans-row">Your answer: <strong>Lazy loading enabled globally</strong></p>
+          <p class="ans-row">Correct answer: <strong>Explicit loading or projected queries for N+1 control</strong></p>
+        </div>
+        <p style="color:var(--muted);margin-top:6px;">Full 10-question breakdown on Test detail history screen</p>
+      </div>
+    </div>
+    <button class="btn-p" style="width:fit-content;height:32px;font-size:10px;">View full test detail history</button>
+  </div>
+</div>
+
+<!-- 09 History -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>09 — Test History</h2></div>
+  <div class="frame shell">
+    <aside class="sb"><div class="ni on">Test History</div></aside>
+    <div class="main">
+      <div class="ct">
+        <h1>Test history</h1>
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Competency</th><th>Technology</th><th>Level</th><th>Score</th><th>Source</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td>09 Oct 2026</td><td>.NET</td><td>EF Core</td><td>Intermediate</td><td>7/10</td><td>Self</td><td><strong>All Q&amp;A</strong></td></tr>
+            <tr><td>05 Oct 2026</td><td>.NET</td><td>Azure</td><td>Advance</td><td>—</td><td><span class="badge badge-pend">Assigned</span></td><td>Start test</td></tr>
+            <tr><td>02 Oct 2026</td><td>.NET</td><td>Azure</td><td>Advance</td><td>6/10</td><td>Manager assigned</td><td><strong>All Q&amp;A</strong></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:9px;color:var(--muted);margin-top:8px;">Each row links to persisted attempt with every question, selected option, correct option, and isCorrect flag.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 10 Profile -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>10 — Profile</h2><span>From newerLoginInfo.json shape</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>My profile</h1>
+        <div class="profile-grid">
+          <img class="profile-photo" src="https://newersworld-sf-static.tothenew.net/prod/profilePicFolder/c0237ac7-e6ec-42ab-abe8-e2daf4ec9a34_Amol-Sambhaji-Belekar-Profile-Pitcure.jpeg" alt="" />
+          <div class="kv">
+            <div><span>Full name</span>Amol Sambhaji Belekar</div><div><span>Email</span>amol.belekar@tothenew.com</div>
+            <div><span>Designation</span>Associate Technical Lead</div><div><span>Competency</span>.Net</div>
+            <div><span>Business unit</span>Beach</div><div><span>HR role</span>Newer</div>
+            <div><span>Competency heads</span>Sushil Jethaliya, Sachin Gupta, Bharat Aggarwal</div><div><span>Newer ID</span>6419</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 11 Skills stub -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>11 — Skills</h2><span>Future · PDF §7</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;"><div class="ct"><div class="banner"><strong>Skills management</strong>Employee Skill, categories, certifications — integrated with LMS in a future release.</div></div></div>
+  </div>
+</div>
+
+<!-- 12 Opportunities -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>12 — Opportunities</h2><span>Employee mobility journey · PDF §4</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;"><div class="ct"><div class="banner"><strong>Internal opportunities</strong>Client interview &amp; mobility postings · Draft → Published → Closed</div></div></div>
+  </div>
+</div>
+
+<!-- 13 Analytics -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>13 — Analytics</h2></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Assessment analytics</h1>
+        <div class="stats">
+          <div class="stat"><div class="v">↑ 12%</div><div class="l">Score trend (90d)</div></div>
+          <div class="stat"><div class="v">3</div><div class="l">Attempts</div></div>
+        </div>
+        <div style="height:120px;background:#fff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:flex-end;gap:8px;padding:16px;">
+          <div style="width:40px;height:40%;background:var(--primary-subtle);border-radius:4px;"></div>
+          <div style="width:40px;height:55%;background:var(--primary-subtle);border-radius:4px;"></div>
+          <div style="width:40px;height:70%;background:var(--primary);border-radius:4px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 14 Manager Dashboard -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>14 — Manager Dashboard</h2><span>team.lead@tothenew.com</span></div>
+  <div class="frame shell">
+    <aside class="sb">
+      <div class="brand">TO THE NEW</div>
+      <div class="grp">Home</div><div class="ni on">Dashboard</div>
+      <div class="grp">Team</div><div class="ni">Team roster</div><div class="ni">Team assessments</div>
+      <div class="grp">Matching</div><div class="ni">Candidate matching</div><div class="ni">Configuration</div>
+      <div class="grp">Governance</div><div class="ni">Audit history</div>
+    </aside>
+    <div class="main">
+      <div class="tb"><span class="bc">Manager › Dashboard</span><div class="uc"><span>Team Lead</span><div class="av">TL</div></div></div>
+      <div class="ct">
+        <h1>Team overview</h1>
+        <div class="stats">
+          <div class="stat"><div class="v">2</div><div class="l">Direct reports</div></div>
+          <div class="stat"><div class="v">5</div><div class="l">Tests this month</div></div>
+          <div class="stat"><div class="v">73%</div><div class="l">Avg score</div></div>
+          <div class="stat"><div class="v">100%</div><div class="l">Completion rate</div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Employee</th><th>Competency</th><th>Attempts</th><th>Latest</th><th>Best</th></tr></thead>
+          <tbody>
+            <tr><td>Amol Belekar</td><td>.NET</td><td>3</td><td>70%</td><td>80%</td></tr>
+            <tr><td>Rahul Kumar</td><td>.NET</td><td>2</td><td>75%</td><td>75%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 15 Team roster -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>15 — Team roster</h2></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Team roster</h1>
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Email</th><th>Designation</th><th>BU</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Amol Belekar</td><td>amol.belekar@tothenew.com</td><td>Associate Technical Lead</td><td>Beach</td><td>Active</td></tr>
+            <tr><td>Rahul Kumar</td><td>rahul.kumar@tothenew.com</td><td>Software Engineer</td><td>Beach</td><td>Active</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 16 Team assessments -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>16 — Team assessments · Amol</h2></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Amol Belekar — assessment detail</h1>
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Technology</th><th>Level</th><th>Score</th><th>Review</th></tr></thead>
+          <tbody>
+            <tr><td>09 Oct 2026</td><td>EF Core</td><td>Intermediate</td><td>7/10</td><td>View answers</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 17 Talent search -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>17 — Talent search</h2><span>Planned · PDF §9</span></div>
+  <div class="frame"><div class="ct" style="width:100%;"><div class="banner"><strong>Talent search &amp; filtering</strong>Skills, availability, experience filters for deployment.</div></div></div>
+</div>
+
+<!-- 18 Matching -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>18 — Candidate matching</h2><span>PDF §5 explainable scoring</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Ranked candidates (demo)</h1>
+        <p class="lead">Requirement: .NET + EF Core · Available in 30 days</p>
+        <table class="tbl">
+          <thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>Matched</th><th>Gaps</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Amol Belekar</td><td>82</td><td>.NET, EF Core, Azure</td><td>CI/CD depth</td></tr>
+            <tr><td>2</td><td>Rahul Kumar</td><td>74</td><td>.NET, OOPS</td><td>EF Core, Advance scenarios</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 19 Matching config -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>19 — Matching configuration</h2><span>PDF §5 weights</span></div>
+  <div class="frame">
+    <div class="ct" style="width:100%;">
+      <h1>Scoring weights</h1>
+      <div class="weights">
+        <div class="wbox"><div class="pct">60%</div><div class="l">Required skill match</div></div>
+        <div class="wbox"><div class="pct">20%</div><div class="l">Experience</div></div>
+        <div class="wbox"><div class="pct">15%</div><div class="l">Availability</div></div>
+        <div class="wbox"><div class="pct">5%</div><div class="l">Certification</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 20 Audit -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>20 — Audit history</h2></div>
+  <div class="frame">
+    <div class="ct" style="width:100%;">
+      <table class="tbl">
+        <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>09 Oct 10:42</td><td>amol.belekar@</td><td>Assessment submitted · 7/10</td></tr>
+          <tr><td>09 Oct 09:15</td><td>team.lead@</td><td>Matching weights viewed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 21 Config -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>21 — Configurations (hub)</h2><span>Manager / Admin</span></div>
+  <div class="frame">
+    <div class="ct" style="width:100%;">
+      <div class="cards">
+        <div class="card hl"><h4>Manual test assignment</h4><p>Assign competency, technology &amp; level to any employee</p></div>
+        <div class="card"><h4>Assessment policies</h4><p>Retake limit, question count, review visibility</p></div>
+        <div class="card"><h4>Matching defaults</h4><p>Link to weights</p></div>
+        <div class="card"><h4>Integrations</h4><p>HRIS · LMS · PM tools (planned)</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 22 Manual assignment config -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>22 — Configuration · Manual test assignment</h2><span>Settings + permissions</span></div>
+  <div class="frame shell">
+    <aside class="sb"><div class="grp">Settings</div><div class="ni on">Configurations</div><div class="ni on" style="margin-left:8px;">Manual assignment</div></aside>
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Manual test assignment</h1>
+        <p class="lead">Managers can assign assessments to any employee; employees see assignments in inbox and dashboard.</p>
+        <div class="toggle-row"><span><strong>Enable manual assignment</strong><br /><span style="color:var(--muted);font-size:9px;">When on, managers see Assign test action</span></span><span class="badge badge-ok">Enabled</span></div>
+        <div class="toggle-row"><span><strong>Email / in-app notification</strong></span><span class="badge badge-ok">On</span></div>
+        <div class="toggle-row"><span><strong>Default due date offset</strong></span><span>7 days</span></div>
+        <div class="toggle-row"><span><strong>Who can assign</strong></span><span>Manager, Administrator</span></div>
+        <button class="btn-p" style="height:32px;font-size:10px;margin-top:12px;">Assign test to employee</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 23 Assign test -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>23 — Manager · Assign test to employee</h2></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Assign new test</h1>
+        <p class="lead">Creates assignment record; employee starts wizard with fields pre-filled (editable per policy).</p>
+        <div class="form-row">
+          <div class="field"><label>Employee</label><select><option>Amol Belekar</option><option>Rahul Kumar</option></select></div>
+          <div class="field"><label>Due date</label><input type="text" value="16 Oct 2026" readonly /></div>
+          <div class="field"><label>Competency</label><select><option>.NET</option></select></div>
+          <div class="field"><label>Technology</label><select><option>EF Core</option></select></div>
+          <div class="field"><label>Skill level</label><select><option>Intermediate</option></select></div>
+          <div class="field"><label>Notes to employee</label><input type="text" value="Complete before client interview prep" readonly /></div>
+        </div>
+        <button class="btn-p" style="height:32px;font-size:10px;">Create assignment</button>
+        <p style="font-size:9px;color:var(--muted);margin-top:12px;">DB: TestAssignment → links to AssessmentAttempt when employee completes test</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 24 Assigned inbox -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>24 — Employee · Assigned tests</h2></div>
+  <div class="frame shell">
+    <aside class="sb"><div class="ni on">Dashboard</div><div class="grp">Assessment</div><div class="ni">Assigned tests</div></aside>
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Assigned tests</h1>
+        <table class="tbl">
+          <thead><tr><th>Assigned by</th><th>Competency</th><th>Technology</th><th>Level</th><th>Due</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Team Lead</td><td>.NET</td><td>Azure</td><td>Advance</td><td>16 Oct</td><td><span class="badge badge-pend">Pending</span></td><td>Start</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 25 Detail history employee -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>25 — Test detail history (employee)</h2><span>All questions · stored in SQL Server</span></div>
+  <div class="frame" style="flex-direction:column;padding:16px 20px;overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div><strong>Attempt ATT-2026-1042</strong> · 09 Oct 2026 · .NET / EF Core / Intermediate · Score 7/10</div>
+      <span><span class="badge badge-ok">7 correct</span> <span class="badge badge-bad">3 wrong</span></span>
+    </div>
+    <div class="qblock"><h4>Question 1 <span class="badge badge-ok">Correct</span></h4><p>Which API configures delete behavior for required relationships?</p><p class="ans-row">Your answer: <strong>Fluent API OnDelete(DeleteBehavior.Restrict)</strong></p></div>
+    <div class="qblock"><h4>Question 2 <span class="badge badge-bad">Incorrect</span></h4><p>Best practice to avoid N+1 queries in EF Core?</p><p class="ans-row">Your answer: <strong>Enable lazy loading on all navigations</strong></p><p class="ans-row" style="color:#0F7B4D;">Correct answer: <strong>Use Include/ThenInclude or explicit projection</strong></p></div>
+    <div class="qblock"><h4>Question 3 <span class="badge badge-ok">Correct</span></h4><p>…</p><p class="ans-row">Your answer: <strong>DbContext pooling reduces allocation overhead</strong></p></div>
+    <p style="font-size:9px;color:var(--muted);">Questions 4–10 continue · AttemptQuestions table stores QuestionJson, SelectedOptionIndex, CorrectOptionIndex, IsCorrect</p>
+  </div>
+</div>
+
+<!-- 26 Detail history manager -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>26 — Test detail history (manager)</h2><span>Team assessments › View answers</span></div>
+  <div class="frame shell">
+    <div class="main" style="width:100%;">
+      <div class="ct">
+        <h1>Amol Belekar — EF Core assessment</h1>
+        <p class="lead">Same persisted detail as employee view · for coaching and audit</p>
+        <table class="tbl" style="margin-bottom:10px;">
+          <thead><tr><th>#</th><th>Question (summary)</th><th>Employee answer</th><th>Correct answer</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Delete behavior configuration</td><td>Fluent API Restrict</td><td>Fluent API Restrict</td><td><span class="badge badge-ok">Correct</span></td></tr>
+            <tr><td>2</td><td>N+1 avoidance</td><td>Lazy loading globally</td><td>Include / projection</td><td><span class="badge badge-bad">Wrong</span></td></tr>
+            <tr><td>3</td><td>DbContext pooling</td><td>Reduces allocation</td><td>Reduces allocation</td><td><span class="badge badge-ok">Correct</span></td></tr>
+          </tbody>
+        </table>
+        <button class="btn-s">Export summary</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 27 Data model -->
+<div class="pdf-sheet">
+  <div class="sheet-header"><h2>27 — Data persistence (implementation note)</h2></div>
+  <div class="frame" style="padding:24px 28px;font-size:10px;line-height:1.55;">
+    <h1 style="font-size:16px;margin-bottom:12px;">Database entities for full test history</h1>
+    <ul style="padding-left:18px;color:var(--text-2);">
+      <li><strong>AssessmentAttempts</strong> — UserId, Competency, Technology, SkillLevel, Score, Status, AssignedByUserId (nullable), Source (Self | ManagerAssigned)</li>
+      <li><strong>AttemptQuestions</strong> — AttemptId, SortOrder, QuestionStem, OptionsJson, CorrectOptionIndex, SelectedOptionIndex, IsCorrect, AnsweredAtUtc</li>
+      <li><strong>TestAssignments</strong> — EmployeeUserId, AssignedByUserId, Competency, Technology, SkillLevel, DueDateUtc, Status (Pending | Completed), AttemptId when done</li>
+      <li><strong>AssessmentConfig</strong> — ManualAssignmentEnabled, NotifyEmployee, DefaultDueDays</li>
+    </ul>
+    <p style="margin-top:14px;color:var(--muted);">After submit: API returns summary; GET /api/attempts/{id}/detail returns full Q&amp;A for employee and manager policies.</p>
+  </div>
+</div>
+
+<p class="no-print" style="padding:24px;text-align:center;color:#666;font-size:12px;">Open this file in a browser and print to PDF, or run <code>node design/export/generate-pdf.mjs</code> after <code>npx playwright install chromium</code>.</p>
+</body>
+</html>
