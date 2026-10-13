@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "skillLevels": [
+    { "id": "beginner", "label": "Beginner", "description": "Foundational concepts and guided scenarios" },
+    { "id": "intermediate", "label": "Intermediate", "description": "Applied knowledge and typical delivery situations" },
+    { "id": "advance", "label": "Advance", "description": "Deep expertise, tradeoffs, and production-grade decisions" }
+  ],
+  "competencies": [
+    {
+      "id": "dotnet",
+      "label": ".NET",
+      "technologies": [
+        { "id": "oops", "label": "OOPS" },
+        { "id": "efcore", "label": "EF Core" },
+        { "id": "aspnetcore", "label": "ASP.NET Core" },
+        { "id": "csharp", "label": "C#" },
+        { "id": "react", "label": "React" },
+        { "id": "azure", "label": "Azure" },
+        { "id": "cicd", "label": "CI/CD" },
+        { "id": "sqlserver", "label": "SQL Server" },
+        { "id": "microservices", "label": "Microservices" }
+      ]
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "technologies": [
+        { "id": "javascript-core", "label": "JavaScript Core" },
+        { "id": "typescript", "label": "TypeScript" },
+        { "id": "react", "label": "React" },
+        { "id": "nodejs", "label": "Node.js" },
+        { "id": "nextjs", "label": "Next.js" },
+        { "id": "jest", "label": "Jest / Testing" },
+        { "id": "webpack", "label": "Build tooling" },
+        { "id": "cicd", "label": "CI/CD" }
+      ]
+    },
+    {
+      "id": "android",
+      "label": "Android",
+      "technologies": [
+        { "id": "kotlin", "label": "Kotlin" },
+        { "id": "java", "label": "Java" },
+        { "id": "jetpack-compose", "label": "Jetpack Compose" },
+        { "id": "android-sdk", "label": "Android SDK" },
+        { "id": "mvvm", "label": "MVVM / Architecture" },
+        { "id": "rest", "label": "REST APIs" },
+        { "id": "firebase", "label": "Firebase" },
+        { "id": "cicd", "label": "CI/CD" }
+      ]
+    },
+    {
+      "id": "java",
+      "label": "Java",
+      "technologies": [
+        { "id": "java-core", "label": "Java Core" },
+        { "id": "spring-boot", "label": "Spring Boot" },
+        { "id": "hibernate", "label": "Hibernate / JPA" },
+        { "id": "microservices", "label": "Microservices" },
+        { "id": "kafka", "label": "Kafka" },
+        { "id": "aws", "label": "AWS" },
+        { "id": "cicd", "label": "CI/CD" }
+      ]
+    },
+    {
+      "id": "devops",
+      "label": "DevOps",
+      "technologies": [
+        { "id": "docker", "label": "Docker" },
+        { "id": "kubernetes", "label": "Kubernetes" },
+        { "id": "terraform", "label": "Terraform" },
+        { "id": "azure", "label": "Azure" },
+        { "id": "aws", "label": "AWS" },
+        { "id": "jenkins", "label": "Jenkins / Pipelines" },
+        { "id": "monitoring", "label": "Monitoring & Observability" }
+      ]
+    },
+    {
+      "id": "qa",
+      "label": "QA",
+      "technologies": [
+        { "id": "manual-testing", "label": "Manual Testing" },
+        { "id": "selenium", "label": "Selenium" },
+        { "id": "api-testing", "label": "API Testing" },
+        { "id": "performance", "label": "Performance Testing" },
+        { "id": "cypress", "label": "Cypress" },
+        { "id": "bdd", "label": "BDD / Cucumber" }
+      ]
+    }
+  ]
+}

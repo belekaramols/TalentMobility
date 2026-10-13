@@ -1,0 +1,32 @@
+Both apps are up and responding (API and UI returned **200**).
+
+- **UI:** http://127.0.0.1:5173/
+- **API:** http://localhost:5241/swagger
+
+Use the seeded accounts from the README (`ChangeMe@Dev`) to sign in.
+Both applications are running.
+
+App	URL
+Web UI
+http://127.0.0.1:5173/
+API (Swagger)
+http://localhost:5241/swagger
+Sign in with a seeded user (password ChangeMe@Dev from the README), for example amol.belekar@tothenew.com (employee) or team.lead@tothenew.com (manager).
+
+If the UI showed API errors right after startup, refresh the page once the API has finished building. To start both again later: c:\Project\Planning\talent-mobility-platform\scripts\run-dev.ps1.
+
+Both apps are up and responding (API and UI returned 200).
+
+UI: http://127.0.0.1:5173/
+API: http://localhost:5241/swagger
+Use the seeded accounts from the README (ChangeMe@Dev) to sign in.
+
+
+The **Vite** and **API** dev tasks were stopped earlier, so both apps were down.
+
+They’re running again:
+
+- **UI:** http://127.0.0.1:5173/
+- **API:** http://localhost:5241/swagger
+
+To start them yourself next time: `c:\Project\Planning\talent-mobility-platform\scripts\run-dev.ps1`

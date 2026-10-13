@@ -1,0 +1,21 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.dbmdl
+
+## Node
+node_modules/
+dist/
+*.local
+
+## Secrets
+appsettings.Development.local.json
+.env
+.env.local
+
+## OS
+Thumbs.db
+.DS_Store
