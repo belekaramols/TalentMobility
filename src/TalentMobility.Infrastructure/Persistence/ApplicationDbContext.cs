@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using TalentMobility.Application.Abstractions;
 using TalentMobility.Domain.Entities;
 
 namespace TalentMobility.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -26,6 +27,10 @@ public class ApplicationDbContext : DbContext
             e.HasIndex(x => x.UserName).IsUnique();
             e.Property(x => x.UserName).HasMaxLength(256);
             e.Property(x => x.FullName).HasMaxLength(256);
+            e.HasIndex(x => x.ManagerEmployeeId);
+            e.HasOne<EmployeeProfile>().WithMany()
+                .HasForeignKey(x => x.ManagerEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<UserCredential>(e =>

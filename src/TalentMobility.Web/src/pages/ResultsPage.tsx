@@ -1,6 +1,12 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Award, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import { api, AttemptResult } from "../api/client";
+import { ErrorState, PageLoading } from "../components/common/PageState";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Progress } from "../components/ui/progress";
 
 export function ResultsPage() {
   const { attemptId } = useParams();
@@ -12,29 +18,50 @@ export function ResultsPage() {
     enabled: !!attemptId && !cached,
   });
   const data = cached ?? detail.data;
-  if (!data) return <p>Loading…</p>;
+  if (!data && detail.isPending) return <PageLoading />;
+  if (!data) return <ErrorState title="Result unavailable" description="This assessment result could not be loaded." onRetry={() => detail.refetch()} />;
+  const percentage = data.maxScore > 0 ? Math.round((data.score / data.maxScore) * 100) : 0;
 
   return (
-    <div>
-      <h2 className="page-title">Assessment complete</h2>
-      <div className="stat" style={{ maxWidth: 320, marginBottom: 20 }}>
-        <strong>{data.score} / {data.maxScore}</strong>
-        <span className="badge-ok" style={{ marginLeft: 8 }}>{data.correctCount} correct</span>
-        <span className="badge-bad" style={{ marginLeft: 8 }}>{data.incorrectCount} incorrect</span>
-      </div>
-      {data.questions.map((q) => (
-        <div key={q.id} className="card" style={{ marginBottom: 8, cursor: "default" }}>
-          <span className={q.isCorrect ? "badge-ok" : "badge-bad"}>Q{q.sortOrder}</span>
-          <p style={{ margin: "8px 0" }}>{q.stem}</p>
-          <p style={{ fontSize: 12 }}>Your answer: {q.options[q.selectedOptionIndex ?? 0]}</p>
-          {!q.isCorrect && (
-            <p style={{ fontSize: 12, color: "#0f7b4d" }}>Correct: {q.options[q.correctOptionIndex]}</p>
-          )}
+    <div className="mx-auto max-w-5xl space-y-6">
+      <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <div className="flex flex-col items-center text-center">
+          <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Award className="size-8" /></span>
+          <Badge className="mt-5" variant={percentage >= 70 ? "success" : "warning"}>Assessment complete</Badge>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">You scored {percentage}%</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{data.score} of {data.maxScore} questions answered correctly.</p>
+          <div className="mt-6 w-full max-w-md"><Progress value={percentage} className="h-3" /></div>
+          <div className="mt-7 grid w-full max-w-lg grid-cols-2 gap-3">
+            <div className="rounded-xl bg-emerald-500/10 p-4"><CheckCircle2 className="mx-auto size-5 text-emerald-600" /><p className="mt-2 text-xl font-bold">{data.correctCount}</p><p className="text-xs text-muted-foreground">Correct</p></div>
+            <div className="rounded-xl bg-destructive/10 p-4"><XCircle className="mx-auto size-5 text-destructive" /><p className="mt-2 text-xl font-bold">{data.incorrectCount}</p><p className="text-xs text-muted-foreground">Incorrect</p></div>
+          </div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Button asChild><Link to="/assessment/history">View history</Link></Button>
+            <Button asChild variant="outline"><Link to="/assessment/new"><RotateCcw className="size-4" />New assessment</Link></Button>
+          </div>
         </div>
-      ))}
-      <Link to="/assessment/history" className="btn btn-primary" style={{ display: "inline-block", marginTop: 16 }}>
-        View test history
-      </Link>
+      </section>
+
+      <Card>
+        <CardHeader><CardTitle>Question review</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {data.questions.map((question) => (
+            <article key={question.id} className={`rounded-xl border p-4 sm:p-5 ${question.isCorrect ? "border-emerald-500/25 bg-emerald-500/5" : "border-destructive/25 bg-destructive/5"}`}>
+              <div className="flex items-start gap-3">
+                {question.isCorrect ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" /> : <XCircle className="mt-0.5 size-5 shrink-0 text-destructive" />}
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Question {question.sortOrder}</p>
+                  <h2 className="mt-1 font-semibold leading-6">{question.stem}</h2>
+                  <div className="mt-3 space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">Your answer:</span> {question.selectedOptionIndex != null ? question.options[question.selectedOptionIndex] : "Not answered"}</p>
+                    {!question.isCorrect && <p className="text-emerald-700 dark:text-emerald-300"><span className="font-medium">Correct answer:</span> {question.options[question.correctOptionIndex]}</p>}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

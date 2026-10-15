@@ -19,7 +19,7 @@ talent-mobility-platform/
 ## Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 20+](https://nodejs.org/)
+- [Node.js 20.19+](https://nodejs.org/)
 - SQL Server Express: `localhost\SQLEXPRESS`
 
 ## Database
@@ -84,6 +84,11 @@ git push -u origin main
 
 ```powershell
 dotnet build TalentMobility.sln
+dotnet test TalentMobility.sln
+
+cd src\TalentMobility.Web
+npm.cmd run build
+npm.cmd test
 ```
 
 Add `dotnet ef migrations` when moving from `EnsureCreated` to migration-based deployments.

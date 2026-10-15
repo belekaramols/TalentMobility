@@ -17,11 +17,35 @@ public static class DatabaseInitializer
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
 
         await db.Database.EnsureCreatedAsync();
+        if (db.Database.IsSqlServer())
+            await EnsureManagerColumnAsync(db);
 
-        if (await db.EmployeeProfiles.AnyAsync()) return;
+        if (!await db.EmployeeProfiles.AnyAsync())
+        {
+            logger.LogInformation("Seeding database...");
+            await SeedAsync(db);
+        }
 
-        logger.LogInformation("Seeding database...");
-        await SeedAsync(db);
+        await BackfillTeamAsync(db);
+    }
+
+    private static async Task EnsureManagerColumnAsync(ApplicationDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH(N'EmployeeProfiles', N'ManagerEmployeeId') IS NULL
+                ALTER TABLE EmployeeProfiles ADD ManagerEmployeeId uniqueidentifier NULL;
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_EmployeeProfiles_ManagerEmployeeId' AND object_id = OBJECT_ID(N'EmployeeProfiles'))
+                CREATE INDEX IX_EmployeeProfiles_ManagerEmployeeId ON EmployeeProfiles(ManagerEmployeeId);
+            """);
+    }
+
+    private static async Task BackfillTeamAsync(ApplicationDbContext db)
+    {
+        var leadId = Guid.Parse("11111111-1111-1111-1111-111111111103");
+        Guid[] team = [Guid.Parse("11111111-1111-1111-1111-111111111101"), Guid.Parse("11111111-1111-1111-1111-111111111102")];
+        await db.EmployeeProfiles
+            .Where(e => team.Contains(e.Id) && e.ManagerEmployeeId == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(e => e.ManagerEmployeeId, leadId));
     }
 
     private static async Task SeedAsync(ApplicationDbContext db)
@@ -49,6 +73,7 @@ public static class DatabaseInitializer
             BusinessUnitId = 23,
             HrRoleName = "Newer",
             HrRoleId = 1,
+            ManagerEmployeeId = leadId,
             CompetencyHeadNames = "Sushil Ramsukh Jethaliya,Sachin Gupta,Bharat Aggarwal",
             CompetencyHeadEmails = "sushil.jethaliya@tothenew.com,sachin.gupta@tothenew.com,bharat.aggarwal@tothenew.com",
             CreatedAtUtc = DateTime.UtcNow
@@ -66,6 +91,7 @@ public static class DatabaseInitializer
             CompetencyName = ".Net",
             BusinessUnitName = "Beach",
             HrRoleName = "Newer",
+            ManagerEmployeeId = leadId,
             CreatedAtUtc = DateTime.UtcNow
         };
 

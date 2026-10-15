@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TalentMobility.Infrastructure.Persistence;
-using TalentMobility.Infrastructure.Services;
+using TalentMobility.Application.Interfaces;
 
 namespace TalentMobility.Api.Controllers;
 
@@ -11,21 +9,21 @@ namespace TalentMobility.Api.Controllers;
 [Authorize]
 public class ProfileController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
-    private readonly AuthService _auth;
+    private readonly IProfileService _profiles;
+    private readonly IUserSession _session;
 
-    public ProfileController(ApplicationDbContext db, AuthService auth)
+    public ProfileController(IProfileService profiles, IUserSession session)
     {
-        _db = db;
-        _auth = auth;
+        _profiles = profiles;
+        _session = session;
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> GetProfile()
+    public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var profile = await _db.EmployeeProfiles.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        var profile = await _profiles.GetOwnAsync(id.Value, cancellationToken);
         return profile is null ? NotFound() : Ok(profile);
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TalentMobility.Application.Dtos;
-using TalentMobility.Infrastructure.Services;
+using TalentMobility.Application.Interfaces;
 
 namespace TalentMobility.Api.Controllers;
 
@@ -10,57 +10,56 @@ namespace TalentMobility.Api.Controllers;
 [Authorize]
 public class AttemptsController : ControllerBase
 {
-    private readonly AssessmentService _assessments;
-    private readonly AuthService _auth;
+    private readonly IAssessmentService _assessments;
+    private readonly IUserSession _session;
 
-    public AttemptsController(AssessmentService assessments, AuthService auth)
+    public AttemptsController(IAssessmentService assessments, IUserSession session)
     {
         _assessments = assessments;
-        _auth = auth;
+        _session = session;
     }
 
     [HttpPost("start")]
-    public async Task<IActionResult> Start([FromBody] StartAttemptRequest request)
+    public async Task<IActionResult> Start([FromBody] StartAttemptRequest request, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var attempt = await _assessments.StartAttemptAsync(id.Value, request);
-        return attempt is null ? BadRequest() : Ok(attempt);
+        var attempt = await _assessments.StartAttemptAsync(id.Value, request, cancellationToken);
+        return attempt is null ? NotFound() : Ok(attempt);
     }
 
     [HttpGet("{attemptId:guid}")]
-    public async Task<IActionResult> Get(Guid attemptId)
+    public async Task<IActionResult> Get(Guid attemptId, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var attempt = await _assessments.GetAttemptAsync(id.Value, attemptId);
+        var attempt = await _assessments.GetAttemptAsync(id.Value, attemptId, cancellationToken);
         return attempt is null ? NotFound() : Ok(attempt);
     }
 
     [HttpPost("{attemptId:guid}/submit")]
-    public async Task<IActionResult> Submit(Guid attemptId, [FromBody] SubmitAttemptRequest request)
+    public async Task<IActionResult> Submit(Guid attemptId, [FromBody] SubmitAttemptRequest request, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var result = await _assessments.SubmitAsync(id.Value, attemptId, request);
-        return result is null ? BadRequest() : Ok(result);
+        var result = await _assessments.SubmitAsync(id.Value, attemptId, request, cancellationToken);
+        return result is null ? NotFound() : Ok(result);
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> History()
+    public async Task<IActionResult> History([FromQuery] PageQuery page, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        return Ok(await _assessments.GetHistoryAsync(id.Value));
+        return Ok(await _assessments.GetHistoryAsync(id.Value, page.Page, page.PageSize, cancellationToken));
     }
 
     [HttpGet("{attemptId:guid}/detail")]
-    public async Task<IActionResult> Detail(Guid attemptId)
+    public async Task<IActionResult> Detail(Guid attemptId, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var isManager = User.IsInRole("Manager") || User.IsInRole("Administrator");
-        var result = await _assessments.GetDetailAsync(id.Value, attemptId, isManager);
+        var result = await _assessments.GetOwnDetailAsync(id.Value, attemptId, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 }

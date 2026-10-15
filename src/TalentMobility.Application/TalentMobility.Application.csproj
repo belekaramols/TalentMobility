@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <ProjectReference Include="..\TalentMobility.Domain\TalentMobility.Domain.csproj" />
   </ItemGroup>
 </Project>

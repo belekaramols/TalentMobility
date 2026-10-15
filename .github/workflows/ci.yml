@@ -16,6 +16,7 @@ jobs:
           dotnet-version: "8.0.x"
       - run: dotnet restore TalentMobility.sln
       - run: dotnet build TalentMobility.sln --no-restore -c Release
+      - run: dotnet test TalentMobility.sln --no-build -c Release
 
   build-web:
     runs-on: ubuntu-latest

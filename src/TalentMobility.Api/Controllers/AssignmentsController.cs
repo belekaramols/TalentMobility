@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentMobility.Application.Authorization;
 using TalentMobility.Application.Dtos;
-using TalentMobility.Infrastructure.Services;
+using TalentMobility.Application.Interfaces;
 
 namespace TalentMobility.Api.Controllers;
 
@@ -10,44 +11,48 @@ namespace TalentMobility.Api.Controllers;
 [Authorize]
 public class AssignmentsController : ControllerBase
 {
-    private readonly AssignmentService _assignments;
-    private readonly AuthService _auth;
+    private readonly IAssignmentService _assignments;
+    private readonly IUserSession _session;
 
-    public AssignmentsController(AssignmentService assignments, AuthService auth)
+    public AssignmentsController(IAssignmentService assignments, IUserSession session)
     {
         _assignments = assignments;
-        _auth = auth;
+        _session = session;
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> MyAssignments()
+    public async Task<IActionResult> MyAssignments([FromQuery] PageQuery page, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        return Ok(await _assignments.GetForEmployeeAsync(id.Value));
+        return Ok(await _assignments.GetForEmployeeAsync(id.Value, page.Page, page.PageSize, cancellationToken));
     }
 }
 
 [ApiController]
 [Route("api/manager/assignments")]
-[Authorize(Roles = "Manager,Administrator")]
+[Authorize(Policy = Policies.ManageTeam)]
 public class ManagerAssignmentsController : ControllerBase
 {
-    private readonly AssignmentService _assignments;
-    private readonly AuthService _auth;
+    private readonly IAssignmentService _assignments;
+    private readonly IUserSession _session;
+    private readonly IAuthorizationService _authorization;
 
-    public ManagerAssignmentsController(AssignmentService assignments, AuthService auth)
+    public ManagerAssignmentsController(IAssignmentService assignments, IUserSession session, IAuthorizationService authorization)
     {
         _assignments = assignments;
-        _auth = auth;
+        _session = session;
+        _authorization = authorization;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAssignmentRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateAssignmentRequest request, CancellationToken cancellationToken)
     {
-        var id = _auth.GetCurrentUserId();
+        var id = _session.UserId;
         if (id is null) return Unauthorized();
-        var result = await _assignments.CreateAsync(id.Value, request);
-        return result is null ? BadRequest() : Ok(result);
+        var access = await _authorization.AuthorizeAsync(User, request.EmployeeId, Policies.AccessTeamMember);
+        if (!access.Succeeded) return Forbid();
+        var result = await _assignments.CreateAsync(id.Value, _session.IsPlatformAdmin, request, cancellationToken);
+        return result is null ? NotFound() : Ok(result);
     }
 }

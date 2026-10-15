@@ -23,6 +23,7 @@ public class EmployeeProfile
     public string? CompetencyHeadEmails { get; set; }
     public string? DeveloperSkillLevel { get; set; }
     public string? RawLoginJson { get; set; }
+    public Guid? ManagerEmployeeId { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 

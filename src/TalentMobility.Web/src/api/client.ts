@@ -1,23 +1,76 @@
 const base = "";
+let csrfToken: string | null = null;
+
+export type ProblemDetails = {
+  title?: string;
+  detail?: string;
+  status?: number;
+  traceId?: string;
+  errors?: Record<string, string[]>;
+};
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly problem?: ProblemDetails,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function csrf(): Promise<string> {
+  if (csrfToken) return csrfToken;
+  const res = await fetch(`${base}/api/auth/csrf`, { credentials: "include" });
+  if (!res.ok) throw new Error("Unable to start a secure session.");
+  const data = (await res.json()) as { token: string };
+  csrfToken = data.token;
+  return csrfToken;
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = (options?.method ?? "GET").toUpperCase();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string> | undefined),
+  };
+  if (method !== "GET" && method !== "HEAD") headers["X-XSRF-TOKEN"] = await csrf();
   const res = await fetch(`${base}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    headers,
     ...options,
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    let problem: ProblemDetails | undefined;
+    try {
+      problem = text ? JSON.parse(text) as ProblemDetails : undefined;
+    } catch {
+      problem = undefined;
+    }
+    if (res.status === 401 && path !== "/api/auth/login") {
+      csrfToken = null;
+      window.dispatchEvent(new CustomEvent("talentmobility:session-expired"));
+    }
+    const validation = problem?.errors ? Object.values(problem.errors).flat()[0] : undefined;
+    const message = (validation ?? problem?.detail ?? problem?.title ?? text) || res.statusText;
+    throw new ApiError(message, res.status, problem);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  logout: () => request<void>("/api/auth/logout", { method: "POST" }),
+  login: async (email: string, password: string) => {
+    const result = await request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    csrfToken = null;
+    return result;
+  },
+  logout: async () => {
+    await request<void>("/api/auth/logout", { method: "POST" });
+    csrfToken = null;
+  },
   me: () => request<CurrentUser>("/api/auth/me"),
   navigation: () => request<NavGroup[]>("/api/navigation"),
   competencies: () => request<Competency[]>("/api/catalog/competencies"),
@@ -30,13 +83,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ answers }),
     }),
-  history: () => request<AttemptSummary[]>("/api/attempts/me"),
+  history: (page = 1, pageSize = 20) => request<Paged<AttemptSummary>>(`/api/attempts/me?page=${page}&pageSize=${pageSize}`),
   attemptDetail: (id: string) => request<AttemptResult>(`/api/attempts/${id}/detail`),
   profile: () => request<EmployeeProfile>("/api/profile/me"),
-  assignments: () => request<Assignment[]>("/api/assignments/me"),
+  assignments: (page = 1, pageSize = 20) => request<Paged<Assignment>>(`/api/assignments/me?page=${page}&pageSize=${pageSize}`),
   managerDashboard: () => request<ManagerDashboard>("/api/manager/dashboard"),
-  managerEmployees: () => request<EmployeeListItem[]>("/api/manager/employees"),
-  managerEmployeeAttempts: (id: string) => request<AttemptSummary[]>(`/api/manager/employees/${id}/attempts`),
+  managerEmployees: (page = 1, pageSize = 20) => request<Paged<EmployeeListItem>>(`/api/manager/employees?page=${page}&pageSize=${pageSize}`),
+  managerEmployeeAttempts: (id: string, page = 1, pageSize = 20) =>
+    request<Paged<AttemptSummary>>(`/api/manager/employees/${id}/attempts?page=${page}&pageSize=${pageSize}`),
   managerAttemptDetail: (employeeId: string, attemptId: string) =>
     request<AttemptResult>(`/api/manager/employees/${employeeId}/attempts/${attemptId}/detail`),
   createAssignment: (body: CreateAssignmentBody) =>
@@ -47,8 +101,10 @@ export const api = {
   matchingWeights: () => request<MatchingWeights>("/api/manager/matching-weights"),
   updateMatchingWeights: (body: MatchingWeights) =>
     request("/api/manager/matching-weights", { method: "PUT", body: JSON.stringify(body) }),
-  audit: () => request<AuditEntry[]>("/api/manager/audit"),
+  audit: (page = 1, pageSize = 20) => request<Paged<AuditEntry>>(`/api/manager/audit?page=${page}&pageSize=${pageSize}`),
 };
+
+export type Paged<T> = { items: T[]; page: number; pageSize: number; totalCount: number };
 
 export type CurrentUser = {
   id: string;
@@ -104,7 +160,17 @@ export type AttemptSummary = {
   startedAtUtc: string;
   completedAtUtc?: string;
 };
-export type EmployeeProfile = Record<string, unknown>;
+export type EmployeeProfile = {
+  id: string;
+  newerId: number;
+  email: string;
+  fullName: string;
+  designation?: string;
+  competencyName?: string;
+  businessUnitName?: string;
+  profilePicUrl?: string;
+  hrRoleName?: string;
+};
 export type Assignment = {
   id: string;
   assignedByName: string;
@@ -123,11 +189,19 @@ export type ManagerDashboard = {
     employeeId: string;
     fullName: string;
     email: string;
+    competencyName?: string;
     attemptCount: number;
     latestScorePercent?: number;
+    bestScorePercent?: number;
   }[];
 };
-export type EmployeeListItem = { id: string; fullName: string; email: string; designation?: string };
+export type EmployeeListItem = {
+  id: string;
+  fullName: string;
+  email: string;
+  designation?: string;
+  businessUnitName?: string;
+};
 export type CreateAssignmentBody = {
   employeeId: string;
   competencyId: string;
@@ -147,4 +221,4 @@ export type MatchingWeights = {
   availabilityPercent: number;
   certificationPercent: number;
 };
-export type AuditEntry = { id: string; action: string; createdAtUtc: string; metadataJson?: string };
+export type AuditEntry = { id: string; action: string; createdAtUtc: string; actorName?: string };

@@ -1,7 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
+using TalentMobility.Application.Interfaces;
 
 namespace TalentMobility.Infrastructure.Security;
+
+public class PasswordHasher : IPasswordHasher
+{
+    public string Hash(string password) => PasswordHasherService.Hash(password);
+    public bool Verify(string password, string storedHash) => PasswordHasherService.Verify(password, storedHash);
+}
 
 public static class PasswordHasherService
 {

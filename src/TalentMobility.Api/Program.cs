@@ -1,12 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TalentMobility.Api.ExceptionHandling;
+using TalentMobility.Api.Security;
+using TalentMobility.Application.Abstractions;
+using TalentMobility.Application.Authorization;
 using TalentMobility.Application.Constants;
 using TalentMobility.Application.Interfaces;
+using TalentMobility.Application.Services;
+using TalentMobility.Infrastructure.Authorization;
 using TalentMobility.Infrastructure.Persistence;
+using TalentMobility.Infrastructure.Security;
 using TalentMobility.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers().AddJsonOptions(o =>
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+builder.Services.AddScoped<AntiforgeryFilter>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.AddService<AntiforgeryFilter>();
+}).AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
@@ -14,16 +29,33 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure()));
+builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("database", tags: ["ready"]);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<NavigationService>();
-builder.Services.AddScoped<AssessmentService>();
-builder.Services.AddScoped<AssignmentService>();
-builder.Services.AddScoped<ManagerService>();
+builder.Services.AddScoped<IUserSession, CookieUserSession>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<INavigationService, NavigationService>();
+builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<IManagerService, ManagerService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddSingleton<IAssessmentCatalogService, AssessmentCatalogService>();
 builder.Services.AddSingleton<IQuestionGenerator, TemplateQuestionGenerator>();
+builder.Services.AddScoped<IAuthorizationHandler, TeamMemberHandler>();
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "TalentMobility.Csrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:5173"];
 builder.Services.AddCors(o => o.AddPolicy("Spa", p => p.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
@@ -35,18 +67,43 @@ builder.Services.AddAuthentication(AuthConstants.CookieScheme)
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.LoginPath = "/api/auth/login";
-        options.Events.OnRedirectToLogin = ctx =>
+        options.Events.OnRedirectToLogin = async ctx =>
         {
             ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
+            ctx.Response.ContentType = "application/problem+json";
+            await ctx.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Authentication is required.",
+                Type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2"
+            });
+        };
+        options.Events.OnRedirectToAccessDenied = async ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            ctx.Response.ContentType = "application/problem+json";
+            await ctx.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "You do not have access to this resource.",
+                Type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.4"
+            });
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.ManageTeam, policy =>
+        policy.RequireClaim(Permissions.ClaimType, Permissions.ManageTeam));
+    options.AddPolicy(Policies.AccessTeamMember, policy =>
+        policy.Requirements.Add(new TeamMemberRequirement()));
+});
 
 var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services);
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -59,6 +116,18 @@ if (!app.Environment.IsDevelopment())
 app.UseCors("Spa");
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false
+});
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
