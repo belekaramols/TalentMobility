@@ -1,3 +1,20 @@
+Talent Mobility — quick start (Windows)
+
+  cd c:\Project\Planning\talent-mobility-platform
+  .\scripts\run-dev.ps1
+
+Or double-click: scripts\run-dev.cmd
+
+URLs:
+  UI:  http://127.0.0.1:5173/
+  API: http://localhost:5241/swagger
+
+OpenAI key (do not store in this file):
+  cd src\TalentMobility.Api
+  dotnet user-secrets set "AssessmentAi:ApiKey" "YOUR_KEY"
+
+Login: seeded users, password ChangeMe@Dev (see README when restored).
+
 Both apps are up and responding (API and UI returned **200**).
 
 - **UI:** http://127.0.0.1:5173/
@@ -30,3 +47,5 @@ They’re running again:
 - **API:** http://localhost:5241/swagger
 
 To start them yourself next time: `c:\Project\Planning\talent-mobility-platform\scripts\run-dev.ps1`
+cd c:\Project\Planning\talent-mobility-platform
+.\scripts\run-dev.ps1
