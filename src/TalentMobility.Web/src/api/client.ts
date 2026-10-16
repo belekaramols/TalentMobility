@@ -1,3 +1,5 @@
+import { messages } from "../config/messages";
+
 const base = "";
 let csrfToken: string | null = null;
 
@@ -23,7 +25,7 @@ export class ApiError extends Error {
 async function csrf(): Promise<string> {
   if (csrfToken) return csrfToken;
   const res = await fetch(`${base}/api/auth/csrf`, { credentials: "include" });
-  if (!res.ok) throw new Error("Unable to start a secure session.");
+  if (!res.ok) throw new Error(messages.api.secureSessionFailed);
   const data = (await res.json()) as { token: string };
   csrfToken = data.token;
   return csrfToken;
@@ -174,12 +176,15 @@ export type EmployeeProfile = {
 export type Assignment = {
   id: string;
   assignedByName: string;
+  competencyId: string;
   competencyLabel: string;
+  technologyId: string;
   technologyLabel: string;
   skillLevel: string;
   dueDateUtc?: string;
   status: string;
   attemptId?: string;
+  inProgressAttemptId?: string;
 };
 export type ManagerDashboard = {
   teamSize: number;
@@ -214,6 +219,8 @@ export type AssessmentConfig = {
   manualAssignmentEnabled: boolean;
   notifyEmployeeOnAssignment: boolean;
   defaultDueDays: number;
+  maxRetakeCount: number;
+  questionCount: number;
 };
 export type MatchingWeights = {
   requiredSkillMatchPercent: number;

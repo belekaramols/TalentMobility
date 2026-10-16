@@ -6,6 +6,7 @@ import { AppHeader } from "../components/layout/AppHeader";
 import { AppSidebar } from "../components/layout/AppSidebar";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "../components/ui/sheet";
 import { Skeleton } from "../components/ui/skeleton";
+import { messages } from "../config/messages";
 import { cn } from "../lib/utils";
 
 export function AppShell({
@@ -57,7 +58,7 @@ export function AppShell({
         <main id="main-content" className="content mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
           {nav.isError && (
             <p className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              Navigation could not be loaded. Your current page is still available.
+              {messages.shell.navigationFailed}
             </p>
           )}
           {children}

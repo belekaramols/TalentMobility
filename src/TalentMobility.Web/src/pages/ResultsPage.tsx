@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Award, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import { api, AttemptResult } from "../api/client";
+import { messages } from "../config/messages";
 import { ErrorState, PageLoading } from "../components/common/PageState";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -19,7 +20,15 @@ export function ResultsPage() {
   });
   const data = cached ?? detail.data;
   if (!data && detail.isPending) return <PageLoading />;
-  if (!data) return <ErrorState title="Result unavailable" description="This assessment result could not be loaded." onRetry={() => detail.refetch()} />;
+  if (!data) {
+    return (
+      <ErrorState
+        title={messages.pages.resultUnavailable.title}
+        description={messages.pages.resultUnavailable.description}
+        onRetry={() => detail.refetch()}
+      />
+    );
+  }
   const percentage = data.maxScore > 0 ? Math.round((data.score / data.maxScore) * 100) : 0;
 
   return (

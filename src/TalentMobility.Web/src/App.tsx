@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, CurrentUser } from "./api/client";
+import { messages } from "./config/messages";
 import { AppShell } from "./layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import { EmployeeDashboard } from "./pages/EmployeeDashboard";
@@ -81,7 +82,7 @@ export default function App() {
     const expired = () => {
       queryClient.clear();
       setUser(null);
-      toast.error("Your session has expired. Please sign in again.");
+      toast.error(messages.session.expired);
       navigate("/login", { replace: true });
     };
     window.addEventListener("talentmobility:session-expired", expired);

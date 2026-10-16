@@ -4,7 +4,12 @@ namespace TalentMobility.Application.Interfaces;
 
 public interface IQuestionGenerator
 {
-    IReadOnlyList<GeneratedQuestion> Generate(string competencyId, string technologyId, string skillLevel, int count);
+    Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
+        string competencyId,
+        string technologyId,
+        string skillLevel,
+        int count,
+        CancellationToken cancellationToken = default);
 }
 
 public record GeneratedQuestion(string Stem, IReadOnlyList<string> Options, int CorrectIndex);

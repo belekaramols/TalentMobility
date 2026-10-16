@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TalentMobility.Application.Abstractions;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Interfaces;
 using TalentMobility.Application.Validation;
@@ -38,7 +39,7 @@ public class AuthService : IAuthService
         {
             Id = Guid.NewGuid(),
             EmployeeProfileId = user.Id,
-            Action = "Login",
+            Action = Messages.Audit.Login,
             CreatedAtUtc = DateTime.UtcNow
         });
         await _db.SaveChangesAsync(cancellationToken);

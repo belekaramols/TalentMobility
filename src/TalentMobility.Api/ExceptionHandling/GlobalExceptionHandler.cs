@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Exceptions;
 
 namespace TalentMobility.Api.ExceptionHandling;
@@ -16,15 +17,15 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         {
             RequestValidationException validation => (
                 StatusCodes.Status400BadRequest,
-                "One or more validation errors occurred.",
+                Messages.Problems.ValidationFailed,
                 validation.Errors),
             AccessDeniedException => (
                 StatusCodes.Status403Forbidden,
-                "You do not have access to this resource.",
+                Messages.Problems.AccessDenied,
                 null),
             _ => (
                 StatusCodes.Status500InternalServerError,
-                "An unexpected error occurred.",
+                Messages.Problems.UnexpectedError,
                 null)
         };
 

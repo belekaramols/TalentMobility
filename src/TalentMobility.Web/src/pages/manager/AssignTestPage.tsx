@@ -6,17 +6,18 @@ import { CalendarDays, Send } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "../../api/client";
+import { messages } from "../../config/messages";
 import { ErrorState, PageLoading } from "../../components/common/PageState";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 
 const schema = z.object({
-  employeeId: z.string().min(1, "Select an employee."),
-  competencyId: z.string().min(1, "Select a competency."),
-  technologyId: z.string().min(1, "Select a technology."),
-  skillLevel: z.string().min(1, "Select a skill level."),
+  employeeId: z.string().min(1, messages.validation.selectEmployee),
+  competencyId: z.string().min(1, messages.validation.selectCompetency),
+  technologyId: z.string().min(1, messages.validation.selectTechnology),
+  skillLevel: z.string().min(1, messages.validation.selectSkillLevel),
   dueDateUtc: z.string().optional(),
-  notes: z.string().max(1000, "Notes must be 1000 characters or fewer.").optional(),
+  notes: z.string().max(1000, messages.validation.notesTooLong).optional(),
 });
 type AssignmentForm = z.infer<typeof schema>;
 
@@ -44,7 +45,7 @@ export function AssignTestPage() {
       dueDateUtc: values.dueDateUtc ? new Date(`${values.dueDateUtc}T23:59:59`).toISOString() : undefined,
     }),
     onSuccess: () => {
-      toast.success("Assessment assigned successfully.");
+      toast.success(messages.toast.assessmentAssigned);
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
     },

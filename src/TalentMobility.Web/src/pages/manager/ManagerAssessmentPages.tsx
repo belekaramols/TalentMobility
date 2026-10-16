@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/client";
+import { messages } from "../../config/messages";
 import { Pagination } from "../../components/common/Pagination";
 import { EmptyState, ErrorState, PageLoading } from "../../components/common/PageState";
 import { Badge } from "../../components/ui/badge";
@@ -17,7 +18,7 @@ export function ManagerAssessmentsPage({ employeeId }: { employeeId: string }) {
     queryFn: () => api.managerEmployeeAttempts(employeeId, page, 10),
   });
   if (attempts.isPending) return <PageLoading />;
-  if (attempts.isError) return <ErrorState title="Assessments unavailable" onRetry={() => attempts.refetch()} />;
+  if (attempts.isError) return <ErrorState title={messages.pages.assessmentsUnavailable.title} onRetry={() => attempts.refetch()} />;
   return (
     <div className="space-y-6">
       <section>
@@ -27,7 +28,7 @@ export function ManagerAssessmentsPage({ employeeId }: { employeeId: string }) {
         <p className="mt-2 text-sm text-muted-foreground">Review completed and in-progress attempts for this employee.</p>
       </section>
       {attempts.data.items.length === 0 ? (
-        <EmptyState title="No assessment attempts" description="This employee has not started an assessment yet." />
+        <EmptyState title={messages.pages.noAssessmentAttempts.title} description={messages.pages.noAssessmentAttempts.description} />
       ) : (
         <Card>
           <CardContent className="p-0">
@@ -63,7 +64,7 @@ export function ManagerAttemptDetailPage({ employeeId, attemptId }: { employeeId
     queryFn: () => api.managerAttemptDetail(employeeId, attemptId),
   });
   if (detail.isPending) return <PageLoading />;
-  if (detail.isError || !detail.data) return <ErrorState title="Attempt unavailable" onRetry={() => detail.refetch()} />;
+  if (detail.isError || !detail.data) return <ErrorState title={messages.pages.attemptUnavailable.title} onRetry={() => detail.refetch()} />;
   const result = detail.data;
   const percentage = result.maxScore > 0 ? Math.round((result.score / result.maxScore) * 100) : 0;
   return (

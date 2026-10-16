@@ -1,9 +1,11 @@
+using TalentMobility.Application.Constants;
+
 namespace TalentMobility.Application.Exceptions;
 
 public sealed class RequestValidationException : Exception
 {
     public RequestValidationException(IReadOnlyDictionary<string, string[]> errors)
-        : base("Request validation failed.")
+        : base(Messages.Problems.RequestValidationFailed)
     {
         Errors = errors;
     }
@@ -14,7 +16,7 @@ public sealed class RequestValidationException : Exception
 public sealed class AccessDeniedException : Exception
 {
     public AccessDeniedException()
-        : base("Access denied.")
+        : base(Messages.Problems.AccessDeniedShort)
     {
     }
 }

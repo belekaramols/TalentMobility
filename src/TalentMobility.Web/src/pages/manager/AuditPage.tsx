@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { UserRound } from "lucide-react";
 import { api } from "../../api/client";
+import { messages } from "../../config/messages";
 import { EmptyState, ErrorState, PageLoading } from "../../components/common/PageState";
 import { Pagination } from "../../components/common/Pagination";
 import { Badge } from "../../components/ui/badge";
@@ -21,7 +22,7 @@ export function AuditPage() {
       <Card>
         <CardHeader><CardTitle>Activity log</CardTitle><CardDescription>{result.totalCount} recorded event{result.totalCount === 1 ? "" : "s"}</CardDescription></CardHeader>
         <CardContent>
-          {!result.items.length ? <EmptyState title="No audit activity" description="Recorded workspace actions will appear here." /> : (
+          {!result.items.length ? <EmptyState title={messages.pages.noAuditActivity.title} description={messages.pages.noAuditActivity.description} /> : (
             <>
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left text-sm"><thead><tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground"><th className="pb-3 font-semibold">Action</th><th className="pb-3 font-semibold">Actor</th><th className="pb-3 font-semibold">Date</th></tr></thead>

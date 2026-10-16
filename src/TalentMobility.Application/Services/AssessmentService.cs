@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TalentMobility.Application.Abstractions;
 using TalentMobility.Application.Authorization;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Exceptions;
 using TalentMobility.Application.Interfaces;
@@ -33,10 +34,30 @@ public class AssessmentService : IAssessmentService
         if (comp is null || tech is null || level is null)
             throw new RequestValidationException(new Dictionary<string, string[]>
             {
-                ["catalog"] = ["Select a valid competency, technology, and skill level."]
+                ["catalog"] = [Messages.Validation.InvalidCatalogSelection]
             });
 
         var config = await _db.AssessmentConfigurations.AsNoTracking().FirstAsync(cancellationToken);
+
+        if (request.AssignmentId is null)
+        {
+            var completedAttempts = await _db.AssessmentAttempts.AsNoTracking()
+                .CountAsync(
+                    a => a.EmployeeProfileId == userId
+                        && a.CompetencyId == comp.Id
+                        && a.TechnologyId == tech.Id
+                        && a.SkillLevel == level.Id
+                        && a.Status == AttemptStatus.Completed,
+                    cancellationToken);
+            if (completedAttempts >= config.MaxRetakeCount)
+            {
+                throw new RequestValidationException(new Dictionary<string, string[]>
+                {
+                    ["retake"] = [Messages.Validation.RetakeLimitReached(config.MaxRetakeCount)]
+                });
+            }
+        }
+
         var source = AttemptSource.Self;
         Guid? assignedBy = null;
         Guid? assignmentId = null;
@@ -46,6 +67,34 @@ public class AssessmentService : IAssessmentService
             var assignment = await _db.TestAssignments
                 .FirstOrDefaultAsync(a => a.Id == aid && a.EmployeeProfileId == userId, cancellationToken);
             if (assignment is null) return null;
+            if (assignment.Status is AssignmentStatus.Completed or AssignmentStatus.Cancelled)
+            {
+                throw new RequestValidationException(new Dictionary<string, string[]>
+                {
+                    ["assignmentId"] = [Messages.Validation.AssignmentNotAvailable]
+                });
+            }
+
+            if (comp.Id != assignment.CompetencyId
+                || tech.Id != assignment.TechnologyId
+                || level.Id != assignment.SkillLevel)
+            {
+                throw new RequestValidationException(new Dictionary<string, string[]>
+                {
+                    ["assignmentId"] = [Messages.Validation.AssignmentCatalogMismatch]
+                });
+            }
+
+            var existingAttempt = await _db.AssessmentAttempts
+                .Include(a => a.Questions)
+                .FirstOrDefaultAsync(
+                    a => a.TestAssignmentId == aid
+                        && a.EmployeeProfileId == userId
+                        && a.Status == AttemptStatus.InProgress,
+                    cancellationToken);
+            if (existingAttempt is not null)
+                return MapInProgress(existingAttempt);
+
             assignment.Status = AssignmentStatus.InProgress;
             assignmentId = assignment.Id;
             source = AttemptSource.ManagerAssigned;
@@ -69,8 +118,9 @@ public class AssessmentService : IAssessmentService
             MaxScore = config.QuestionCount
         };
 
+        var generated = await _generator.GenerateAsync(comp.Id, tech.Id, level.Id, config.QuestionCount, cancellationToken);
         var order = 1;
-        foreach (var question in _generator.Generate(comp.Id, tech.Id, level.Id, config.QuestionCount))
+        foreach (var question in generated)
         {
             attempt.Questions.Add(new AttemptQuestion
             {
@@ -107,14 +157,14 @@ public class AssessmentService : IAssessmentService
         var expected = attempt.Questions.Select(q => q.Id).ToHashSet();
         var submitted = request.Answers.Select(a => a.QuestionId).ToHashSet();
         if (!expected.SetEquals(submitted))
-            throw new RequestValidationException(new Dictionary<string, string[]> { ["answers"] = ["Submit one answer for every question."] });
+            throw new RequestValidationException(new Dictionary<string, string[]> { ["answers"] = [Messages.Validation.AnswersRequired] });
 
         foreach (var answer in request.Answers)
         {
             var question = attempt.Questions.First(x => x.Id == answer.QuestionId);
             var options = JsonSerializer.Deserialize<List<string>>(question.OptionsJson) ?? [];
             if (answer.SelectedOptionIndex >= options.Count)
-                throw new RequestValidationException(new Dictionary<string, string[]> { ["answers"] = ["Select a valid option for every question."] });
+                throw new RequestValidationException(new Dictionary<string, string[]> { ["answers"] = [Messages.Validation.AnswerInvalidOption] });
             question.SelectedOptionIndex = answer.SelectedOptionIndex;
             question.IsCorrect = answer.SelectedOptionIndex == question.CorrectOptionIndex;
         }
@@ -137,7 +187,7 @@ public class AssessmentService : IAssessmentService
         {
             Id = Guid.NewGuid(),
             EmployeeProfileId = userId,
-            Action = "AssessmentSubmitted",
+            Action = Messages.Audit.AssessmentSubmitted,
             MetadataJson = JsonSerializer.Serialize(new { attemptId, attempt.Score, attempt.MaxScore }),
             CreatedAtUtc = DateTime.UtcNow
         });

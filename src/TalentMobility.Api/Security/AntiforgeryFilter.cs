@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using TalentMobility.Application.Constants;
 
 namespace TalentMobility.Api.Security;
 
@@ -22,7 +23,7 @@ public sealed class AntiforgeryFilter : IAsyncAuthorizationFilter
         context.Result = new ObjectResult(new ProblemDetails
         {
             Status = StatusCodes.Status400BadRequest,
-            Title = "The request could not be validated.",
+            Title = Messages.Problems.AntiforgeryValidationFailed,
             Type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1"
         })
         {

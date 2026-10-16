@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Search, UsersRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/client";
+import { messages } from "../../config/messages";
 import { Pagination } from "../../components/common/Pagination";
 import { EmptyState, ErrorState, PageLoading } from "../../components/common/PageState";
 import { Badge } from "../../components/ui/badge";
@@ -38,7 +39,7 @@ export function ManagerTeamPage() {
         </CardHeader>
         <CardContent className="p-0">
           {members.length === 0 ? (
-            <div className="p-5"><EmptyState title="No employees found" description="Try a different search term." /></div>
+            <div className="p-5"><EmptyState title={messages.pages.noEmployeesFound.title} description={messages.pages.noEmployeesFound.description} /></div>
           ) : (
             <>
               <div className="hidden overflow-x-auto md:block">

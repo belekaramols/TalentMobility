@@ -11,6 +11,7 @@ using TalentMobility.Application.Services;
 using TalentMobility.Infrastructure.Authorization;
 using TalentMobility.Infrastructure.Persistence;
 using TalentMobility.Infrastructure.Security;
+using TalentMobility.Infrastructure.Options;
 using TalentMobility.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,7 +47,10 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IManagerService, ManagerService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddSingleton<IAssessmentCatalogService, AssessmentCatalogService>();
-builder.Services.AddSingleton<IQuestionGenerator, TemplateQuestionGenerator>();
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddHttpClient<GeminiQuestionGenerator>();
+builder.Services.AddScoped<TemplateQuestionGenerator>();
+builder.Services.AddScoped<IQuestionGenerator, FallbackQuestionGenerator>();
 builder.Services.AddScoped<IAuthorizationHandler, TeamMemberHandler>();
 
 builder.Services.AddAntiforgery(options =>
@@ -74,7 +78,7 @@ builder.Services.AddAuthentication(AuthConstants.CookieScheme)
             await ctx.Response.WriteAsJsonAsync(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
-                Title = "Authentication is required.",
+                Title = Messages.Problems.AuthenticationRequired,
                 Type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2"
             });
         };
@@ -85,7 +89,7 @@ builder.Services.AddAuthentication(AuthConstants.CookieScheme)
             await ctx.Response.WriteAsJsonAsync(new ProblemDetails
             {
                 Status = StatusCodes.Status403Forbidden,
-                Title = "You do not have access to this resource.",
+                Title = Messages.Problems.AccessDenied,
                 Type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.4"
             });
         };

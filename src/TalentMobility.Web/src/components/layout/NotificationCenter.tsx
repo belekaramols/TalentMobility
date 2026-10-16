@@ -57,7 +57,7 @@ export function NotificationCenter({ roles }: { roles: string[] }) {
         id: assignment.id,
         title: assignment.status === "InProgress" ? "Continue assessment" : "New assigned assessment",
         detail: `${assignment.technologyLabel}${assignment.dueDateUtc ? ` · due ${formatDate(assignment.dueDateUtc)}` : ""}`,
-        path: `/assessment/new?assignmentId=${assignment.id}`,
+        path: `/assessment/new?assignmentId=${assignment.id}&competencyId=${encodeURIComponent(assignment.competencyId)}&technologyId=${encodeURIComponent(assignment.technologyId)}&skillLevel=${encodeURIComponent(assignment.skillLevel)}`,
         icon: ClipboardCheck,
       }));
   }, [assignments.data, isManager, manager.data]);

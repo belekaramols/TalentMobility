@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, Filter } from "lucide-react";
 import { api } from "../api/client";
+import { messages } from "../config/messages";
 import { Pagination } from "../components/common/Pagination";
 import { EmptyState, ErrorState, PageLoading } from "../components/common/PageState";
 import { Badge } from "../components/ui/badge";
@@ -38,8 +39,8 @@ export function HistoryPage() {
 
       {rows.length === 0 ? (
         <EmptyState
-          title="No assessment history"
-          description="Completed and in-progress assessments will appear here."
+          title={messages.pages.noAssessmentHistory.title}
+          description={messages.pages.noAssessmentHistory.description}
           action={<Button asChild><Link to="/assessment/new">Start an assessment</Link></Button>}
         />
       ) : (

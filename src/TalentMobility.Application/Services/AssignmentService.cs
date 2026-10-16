@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TalentMobility.Application.Abstractions;
 using TalentMobility.Application.Authorization;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Exceptions;
 using TalentMobility.Application.Interfaces;
@@ -34,6 +36,7 @@ public class AssignmentService : IAssignmentService
         config.ManualAssignmentEnabled = request.ManualAssignmentEnabled;
         config.NotifyEmployeeOnAssignment = request.NotifyEmployeeOnAssignment;
         config.DefaultDueDays = request.DefaultDueDays;
+        config.QuestionCount = request.QuestionCount;
         await _db.SaveChangesAsync(cancellationToken);
         return Map(config);
     }
@@ -43,7 +46,10 @@ public class AssignmentService : IAssignmentService
         RequestRules.EnsureValid(RequestRules.ValidateAssignment(request));
         var config = await _db.AssessmentConfigurations.AsNoTracking().FirstAsync(cancellationToken);
         if (!config.ManualAssignmentEnabled)
-            throw new RequestValidationException(new Dictionary<string, string[]> { ["manualAssignmentEnabled"] = ["Manual assignment is disabled."] });
+            throw new RequestValidationException(new Dictionary<string, string[]>
+            {
+                ["manualAssignmentEnabled"] = [Messages.Validation.ManualAssignmentDisabled]
+            });
 
         var employee = await _db.EmployeeProfiles.AsNoTracking()
             .Where(e => e.Id == request.EmployeeId)
@@ -57,7 +63,10 @@ public class AssignmentService : IAssignmentService
         var technology = competency?.Technologies.FirstOrDefault(t => t.Id == request.TechnologyId);
         var level = _catalog.GetSkillLevels().FirstOrDefault(l => l.Id == request.SkillLevel);
         if (competency is null || technology is null || level is null)
-            throw new RequestValidationException(new Dictionary<string, string[]> { ["catalog"] = ["Select a valid competency, technology, and skill level."] });
+            throw new RequestValidationException(new Dictionary<string, string[]>
+            {
+                ["catalog"] = [Messages.Validation.InvalidCatalogSelection]
+            });
 
         var managerName = await _db.EmployeeProfiles.AsNoTracking()
             .Where(e => e.Id == managerId)
@@ -79,9 +88,34 @@ public class AssignmentService : IAssignmentService
             CreatedAtUtc = DateTime.UtcNow
         };
         _db.TestAssignments.Add(assignment);
+        _db.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            EmployeeProfileId = managerId,
+            Action = Messages.Audit.AssignmentCreated,
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                assignmentId = assignment.Id,
+                employeeId = request.EmployeeId,
+                competencyId = competency.Id,
+                technologyId = technology.Id,
+                skillLevel = level.Id
+            }),
+            CreatedAtUtc = DateTime.UtcNow
+        });
         await _db.SaveChangesAsync(cancellationToken);
-        return new AssignmentDto(assignment.Id, managerName, assignment.CompetencyLabel, assignment.TechnologyLabel,
-            assignment.SkillLevel, assignment.DueDateUtc, assignment.Status.ToString(), null);
+        return new AssignmentDto(
+            assignment.Id,
+            managerName,
+            assignment.CompetencyId,
+            assignment.CompetencyLabel,
+            assignment.TechnologyId,
+            assignment.TechnologyLabel,
+            assignment.SkillLevel,
+            assignment.DueDateUtc,
+            assignment.Status.ToString(),
+            null,
+            null);
     }
 
     public async Task<PagedResult<AssignmentDto>> GetForEmployeeAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken)
@@ -97,12 +131,18 @@ public class AssignmentService : IAssignmentService
             .Select(a => new AssignmentDto(
                 a.Id,
                 a.AssignedBy.FullName,
+                a.CompetencyId,
                 a.CompetencyLabel,
+                a.TechnologyId,
                 a.TechnologyLabel,
                 a.SkillLevel,
                 a.DueDateUtc,
                 a.Status.ToString(),
-                a.AssessmentAttemptId))
+                a.AssessmentAttemptId,
+                _db.AssessmentAttempts
+                    .Where(t => t.TestAssignmentId == a.Id && t.Status == AttemptStatus.InProgress)
+                    .Select(t => (Guid?)t.Id)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
         return new PagedResult<AssignmentDto>(items, normalizedPage, normalizedSize, total);
     }

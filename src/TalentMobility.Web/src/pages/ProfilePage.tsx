@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BriefcaseBusiness, Building2, IdCard, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { api } from "../api/client";
+import { messages } from "../config/messages";
 import { ErrorState, PageLoading } from "../components/common/PageState";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
@@ -10,7 +11,7 @@ export function ProfilePage() {
   const profile = useQuery({ queryKey: ["profile"], queryFn: api.profile });
   const p = profile.data;
   if (profile.isPending) return <PageLoading />;
-  if (profile.isError || !p) return <ErrorState title="Profile unavailable" onRetry={() => profile.refetch()} />;
+  if (profile.isError || !p) return <ErrorState title={messages.pages.profileUnavailable.title} onRetry={() => profile.refetch()} />;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">

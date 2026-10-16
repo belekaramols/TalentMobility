@@ -11,12 +11,15 @@ public record CreateAssignmentRequest(
 public record AssignmentDto(
     Guid Id,
     string AssignedByName,
+    string CompetencyId,
     string CompetencyLabel,
+    string TechnologyId,
     string TechnologyLabel,
     string SkillLevel,
     DateTime? DueDateUtc,
     string Status,
-    Guid? AttemptId);
+    Guid? AttemptId,
+    Guid? InProgressAttemptId);
 
 public record AssessmentConfigDto(
     bool ManualAssignmentEnabled,
@@ -28,4 +31,5 @@ public record AssessmentConfigDto(
 public record UpdateAssessmentConfigRequest(
     bool ManualAssignmentEnabled,
     bool NotifyEmployeeOnAssignment,
-    int DefaultDueDays);
+    int DefaultDueDays,
+    int QuestionCount);

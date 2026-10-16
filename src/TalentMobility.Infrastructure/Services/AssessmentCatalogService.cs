@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Interfaces;
 
@@ -13,7 +14,7 @@ public class AssessmentCatalogService : IAssessmentCatalogService
     {
         var asm = Assembly.GetExecutingAssembly();
         using var stream = asm.GetManifestResourceStream("TalentMobility.Infrastructure.Data.assessment-catalog.json")
-            ?? throw new InvalidOperationException("assessment-catalog.json not found.");
+            ?? throw new InvalidOperationException(Messages.System.AssessmentCatalogNotFound);
         using var reader = new StreamReader(stream);
         _root = JsonSerializer.Deserialize<CatalogRoot>(reader.ReadToEnd(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
             ?? new CatalogRoot();

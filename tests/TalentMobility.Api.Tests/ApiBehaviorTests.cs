@@ -9,6 +9,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TalentMobility.Application.Abstractions;
+using TalentMobility.Application.Interfaces;
 using TalentMobility.Domain.Entities;
 using TalentMobility.Infrastructure.Persistence;
 
@@ -156,7 +157,25 @@ public class ApiBehaviorTests : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, assigned.StatusCode);
 
         var inbox = await employee.Client.GetFromJsonAsync<PagedAssignments>("/api/assignments/me", TestJson.Options);
-        Assert.Contains(inbox!.Items, item => item.TechnologyLabel == "C#" && item.Status == "Pending");
+        var pending = Assert.Single(inbox!.Items, item => item.TechnologyLabel == "C#" && item.Status == "Pending");
+        Assert.False(string.IsNullOrWhiteSpace(pending.CompetencyId));
+        Assert.False(string.IsNullOrWhiteSpace(pending.TechnologyId));
+
+        var assignedStart = await employee.SendAsync(HttpMethod.Post, "/api/attempts/start", new
+        {
+            competencyId = "dotnet",
+            technologyId = "csharp",
+            skillLevel = "beginner",
+            assignmentId = pending.Id
+        });
+        Assert.Equal(HttpStatusCode.OK, assignedStart.StatusCode);
+        var assignedAttempt = JsonSerializer.Deserialize<AttemptPayload>(await assignedStart.Content.ReadAsStringAsync(), TestJson.Options);
+        Assert.NotNull(assignedAttempt);
+
+        var inboxAfterStart = await employee.Client.GetFromJsonAsync<PagedAssignments>("/api/assignments/me", TestJson.Options);
+        var inProgress = Assert.Single(inboxAfterStart!.Items, item => item.Id == pending.Id);
+        Assert.Equal("InProgress", inProgress.Status);
+        Assert.Equal(assignedAttempt!.Id, inProgress.InProgressAttemptId);
 
         var weights = await manager.SendAsync(HttpMethod.Put, "/api/manager/matching-weights", new
         {
@@ -223,8 +242,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:DefaultConnection", "Server=(localdb)\\mssqllocaldb;Database=unused;Trusted_Connection=True;TrustServerCertificate=True");
+        builder.UseSetting("Gemini:Enabled", "false");
         builder.ConfigureTestServices(services =>
         {
+            foreach (var registration in services.Where(service => service.ServiceType == typeof(IQuestionGenerator)).ToList())
+                services.Remove(registration);
+            services.AddSingleton<IQuestionGenerator, DeterministicTestQuestionGenerator>();
+
             var registrations = services.Where(service =>
                 service.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
                 service.ServiceType == typeof(ApplicationDbContext) ||
@@ -298,4 +322,10 @@ public sealed record AttemptResultPayload(int Score, int MaxScore, int CorrectCo
 public sealed record PagedAttempts(List<AttemptItem> Items);
 public sealed record AttemptItem(Guid Id, string Status);
 public sealed record PagedAssignments(List<AssignmentItem> Items);
-public sealed record AssignmentItem(string TechnologyLabel, string Status);
+public sealed record AssignmentItem(
+    Guid Id,
+    string CompetencyId,
+    string TechnologyId,
+    string TechnologyLabel,
+    string Status,
+    Guid? InProgressAttemptId);

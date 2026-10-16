@@ -1,4 +1,5 @@
 import { AlertTriangle, Inbox, RefreshCw } from "lucide-react";
+import { messages } from "../../config/messages";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 
@@ -15,8 +16,8 @@ export function PageLoading({ cards = 3 }: { cards?: number }) {
 }
 
 export function ErrorState({
-  title = "Something went wrong",
-  description = "We could not load this page. Please try again.",
+  title = messages.errors.genericTitle,
+  description = messages.errors.genericDescription,
   onRetry,
 }: {
   title?: string;
@@ -28,7 +29,7 @@ export function ErrorState({
       <span className="mb-4 rounded-full bg-destructive/10 p-3 text-destructive"><AlertTriangle className="size-6" /></span>
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
-      {onRetry && <Button className="mt-5" variant="outline" onClick={onRetry}><RefreshCw className="size-4" />Try again</Button>}
+      {onRetry && <Button className="mt-5" variant="outline" onClick={onRetry}><RefreshCw className="size-4" />{messages.errors.tryAgain}</Button>}
     </div>
   );
 }

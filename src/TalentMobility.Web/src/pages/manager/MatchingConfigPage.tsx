@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award, BriefcaseBusiness, CalendarClock, Save, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../api/client";
+import { messages } from "../../config/messages";
 import { ErrorState, PageLoading } from "../../components/common/PageState";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
@@ -24,7 +25,7 @@ export function MatchingConfigPage() {
   const update = useMutation({
     mutationFn: () => api.updateMatchingWeights(values),
     onSuccess: () => {
-      toast.success("Matching weights updated.");
+      toast.success(messages.toast.matchingWeightsUpdated);
       queryClient.invalidateQueries({ queryKey: ["matching-weights"] });
     },
     onError: (error) => toast.error(error.message),

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CalendarClock, ClipboardCheck } from "lucide-react";
 import { api } from "../api/client";
+import { messages } from "../config/messages";
 import { Pagination } from "../components/common/Pagination";
 import { EmptyState, ErrorState, PageLoading } from "../components/common/PageState";
 import { Badge } from "../components/ui/badge";
@@ -25,14 +26,18 @@ export function AssignedTestsPage() {
       </section>
 
       {list.data.items.length === 0 ? (
-        <EmptyState title="No assigned tests" description="New manager-assigned assessments will appear here." />
+        <EmptyState title={messages.pages.noAssignedTests.title} description={messages.pages.noAssignedTests.description} />
       ) : (
         <div className="space-y-4">
           {list.data.items.map((assignment) => {
             const actionable = assignment.status === "Pending" || assignment.status === "InProgress";
-            const href = actionable
-              ? `/assessment/new?assignmentId=${assignment.id}`
-              : assignment.attemptId ? `/assessment/results/${assignment.attemptId}` : "#";
+            const href = assignment.inProgressAttemptId
+              ? `/assessment/test/${assignment.inProgressAttemptId}`
+              : actionable
+                ? `/assessment/new?assignmentId=${assignment.id}&competencyId=${encodeURIComponent(assignment.competencyId)}&technologyId=${encodeURIComponent(assignment.technologyId)}&skillLevel=${encodeURIComponent(assignment.skillLevel)}`
+                : assignment.attemptId
+                  ? `/assessment/results/${assignment.attemptId}`
+                  : "#";
             return (
               <Card key={assignment.id} className="transition-colors hover:border-primary/30">
                 <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">

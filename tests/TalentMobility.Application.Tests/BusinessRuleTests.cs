@@ -1,4 +1,5 @@
 using TalentMobility.Application.Authorization;
+using TalentMobility.Application.Constants;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Validation;
 using TalentMobility.Domain.Enums;
@@ -9,6 +10,13 @@ public class BusinessRuleTests
 {
     private static readonly Guid ManagerId = Guid.Parse("11111111-1111-1111-1111-111111111103");
     private static readonly Guid OtherManagerId = Guid.Parse("22222222-2222-2222-2222-222222222203");
+
+    [Fact]
+    public void Retake_limit_message_includes_configured_maximum()
+    {
+        var message = Messages.Validation.RetakeLimitReached(5);
+        Assert.Contains("5", message);
+    }
 
     [Fact]
     public void Login_rejects_invalid_email_and_short_password()

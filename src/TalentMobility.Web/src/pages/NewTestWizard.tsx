@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Code2, Layers3, Play, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../api/client";
+import { messages } from "../config/messages";
 import { ErrorState, PageLoading } from "../components/common/PageState";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -32,7 +33,7 @@ export function NewTestWizard() {
       const attempt = await api.startAttempt({ competencyId, technologyId, skillLevel, assignmentId });
       navigate(`/assessment/test/${attempt.id}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Assessment could not be started.");
+      toast.error(error instanceof Error ? error.message : messages.toast.assessmentStartFailed);
     } finally {
       setStarting(false);
     }

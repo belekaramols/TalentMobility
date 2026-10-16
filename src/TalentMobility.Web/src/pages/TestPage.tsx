@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Flag, Send } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../api/client";
+import { messages } from "../config/messages";
 import { ErrorState, PageLoading } from "../components/common/PageState";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -25,7 +26,15 @@ export function TestPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (attempt.isPending) return <PageLoading />;
-  if (attempt.isError || !attempt.data) return <ErrorState title="Assessment unavailable" description="This assessment may have been completed or is no longer available." onRetry={() => attempt.refetch()} />;
+  if (attempt.isError || !attempt.data) {
+    return (
+      <ErrorState
+        title={messages.pages.assessmentUnavailable.title}
+        description={messages.pages.assessmentUnavailable.description}
+        onRetry={() => attempt.refetch()}
+      />
+    );
+  }
   const q = attempt.data.questions[index];
   const total = attempt.data.questions.length;
   const answered = Object.keys(answers).length;
@@ -33,7 +42,7 @@ export function TestPage() {
 
   async function submitAll() {
     if (remaining > 0) {
-      toast.error(`Answer all questions before submitting. ${remaining} remaining.`);
+      toast.error(messages.toast.answerAllBeforeSubmit(remaining));
       setConfirmOpen(false);
       return;
     }
@@ -46,7 +55,7 @@ export function TestPage() {
       const result = await api.submitAttempt(attemptId!, payload);
       navigate(`/assessment/results/${result.id}`, { state: { result } });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Assessment could not be submitted.");
+      toast.error(error instanceof Error ? error.message : messages.toast.assessmentSubmitFailed);
       setConfirmOpen(false);
     } finally {
       setSubmitting(false);
