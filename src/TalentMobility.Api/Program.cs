@@ -7,6 +7,7 @@ using TalentMobility.Application.Abstractions;
 using TalentMobility.Application.Authorization;
 using TalentMobility.Application.Constants;
 using TalentMobility.Application.Interfaces;
+using TalentMobility.Application.Options;
 using TalentMobility.Application.Services;
 using TalentMobility.Infrastructure.Authorization;
 using TalentMobility.Infrastructure.Persistence;
@@ -46,11 +47,12 @@ builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IManagerService, ManagerService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
-builder.Services.AddSingleton<IAssessmentCatalogService, AssessmentCatalogService>();
+builder.Services.AddScoped<IAssessmentCatalogService, DbAssessmentCatalogService>();
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.Configure<PaginationOptions>(builder.Configuration.GetSection(PaginationOptions.SectionName));
 builder.Services.AddHttpClient<GeminiQuestionGenerator>();
-builder.Services.AddScoped<TemplateQuestionGenerator>();
-builder.Services.AddScoped<IQuestionGenerator, FallbackQuestionGenerator>();
+builder.Services.AddScoped<ICatalogQuestionBank, CatalogQuestionBankService>();
+builder.Services.AddScoped<IQuestionGenerationService, QuestionGenerationOrchestrator>();
 builder.Services.AddScoped<IAuthorizationHandler, TeamMemberHandler>();
 
 builder.Services.AddAntiforgery(options =>
@@ -104,6 +106,10 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+PaginationOptionsAccessor.Value =
+    app.Configuration.GetSection(PaginationOptions.SectionName).Get<PaginationOptions>()
+    ?? new PaginationOptions();
 
 await DatabaseInitializer.InitializeAsync(app.Services);
 

@@ -17,8 +17,16 @@ public static class DatabaseInitializer
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
 
         await db.Database.EnsureCreatedAsync();
+        await CatalogSchemaBootstrap.EnsureAsync(db, logger);
         if (db.Database.IsSqlServer())
+        {
             await EnsureManagerColumnAsync(db);
+            await EnsureQuestionSourceColumnAsync(db);
+        }
+
+        await CatalogDataSeeder.SeedIfEmptyAsync(db, logger);
+        await CatalogDataSeeder.SeedQuestionsIfEmptyAsync(db, logger);
+        await CatalogDataSeeder.RefreshLegacyQuestionBankAsync(db, logger);
 
         if (!await db.EmployeeProfiles.AnyAsync())
         {
@@ -27,6 +35,14 @@ public static class DatabaseInitializer
         }
 
         await BackfillTeamAsync(db);
+    }
+
+    private static async Task EnsureQuestionSourceColumnAsync(ApplicationDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH(N'AssessmentAttempts', N'QuestionSource') IS NULL
+                ALTER TABLE AssessmentAttempts ADD QuestionSource int NOT NULL CONSTRAINT DF_AssessmentAttempts_QuestionSource DEFAULT 0;
+            """);
     }
 
     private static async Task EnsureManagerColumnAsync(ApplicationDbContext db)

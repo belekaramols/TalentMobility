@@ -22,6 +22,20 @@ export const messages = {
     answerAllBeforeSubmit: (remaining: number) =>
       `Answer all questions before submitting. ${remaining} remaining.`,
   },
+  questionGeneration: {
+    dialogTitle: "AI question generation unavailable",
+    dialogDescription: "The AI service returned the following message. You can try again or use configured questions from the database.",
+    tryAiAgain: "Try AI again",
+    useBank: "Use configured questions",
+    bankAvailable: (count: number) => `${count} configured question(s) available for this selection.`,
+    bankUnavailable: "No configured question set is available for this competency, technology, and level.",
+    generatingAi: "Generating questions with AI…",
+    generatingBank: "Loading configured questions…",
+    loadingHintAi: "This can take up to a few minutes while the model builds your assessment. Please keep this tab open.",
+    loadingHintBank: "Loading your question set from the configured database bank.",
+    bankBadge: "Configured question set",
+    aiBadge: "AI-generated questions",
+  },
   errors: {
     genericTitle: "Something went wrong",
     genericDescription: "We could not load this page. Please try again.",

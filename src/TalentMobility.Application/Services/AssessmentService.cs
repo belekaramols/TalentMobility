@@ -16,13 +16,19 @@ public class AssessmentService : IAssessmentService
 {
     private readonly IApplicationDbContext _db;
     private readonly IAssessmentCatalogService _catalog;
-    private readonly IQuestionGenerator _generator;
+    private readonly IQuestionGenerationService _generation;
+    private readonly ICatalogQuestionBank _questionBank;
 
-    public AssessmentService(IApplicationDbContext db, IAssessmentCatalogService catalog, IQuestionGenerator generator)
+    public AssessmentService(
+        IApplicationDbContext db,
+        IAssessmentCatalogService catalog,
+        IQuestionGenerationService generation,
+        ICatalogQuestionBank questionBank)
     {
         _db = db;
         _catalog = catalog;
-        _generator = generator;
+        _generation = generation;
+        _questionBank = questionBank;
     }
 
     public async Task<AttemptInProgressDto?> StartAttemptAsync(Guid userId, StartAttemptRequest request, CancellationToken cancellationToken)
@@ -38,6 +44,11 @@ public class AssessmentService : IAssessmentService
             });
 
         var config = await _db.AssessmentConfigurations.AsNoTracking().FirstAsync(cancellationToken);
+        if (!QuestionSourceParser.TryParse(request.QuestionSource, out var questionSource))
+            throw new RequestValidationException(new Dictionary<string, string[]>
+            {
+                ["questionSource"] = [Messages.Validation.InvalidQuestionSource]
+            });
 
         if (request.AssignmentId is null)
         {
@@ -115,10 +126,24 @@ public class AssessmentService : IAssessmentService
             AssignedByEmployeeId = assignedBy,
             TestAssignmentId = assignmentId,
             StartedAtUtc = DateTime.UtcNow,
-            MaxScore = config.QuestionCount
+            MaxScore = config.QuestionCount,
+            QuestionSource = questionSource
         };
 
-        var generated = await _generator.GenerateAsync(comp.Id, tech.Id, level.Id, config.QuestionCount, cancellationToken);
+        IReadOnlyList<GeneratedQuestion> generated;
+        try
+        {
+            generated = await _generation.GenerateAsync(
+                comp.Id, tech.Id, level.Id, config.QuestionCount, questionSource, cancellationToken);
+        }
+        catch (QuestionGenerationException ex)
+        {
+            var available = await _questionBank.CountAvailableAsync(comp.Id, tech.Id, level.Id, cancellationToken);
+            var canUseBank = available >= config.QuestionCount;
+            if (ex.CanUseBank != canUseBank)
+                throw new QuestionGenerationException(ex.UserMessage, ex.Provider, ex.StatusCode, ex.Retryable, canUseBank);
+            throw;
+        }
         var order = 1;
         foreach (var question in generated)
         {
@@ -195,10 +220,34 @@ public class AssessmentService : IAssessmentService
         return MapResult(attempt);
     }
 
-    public Task<PagedResult<AttemptSummaryDto>> GetHistoryAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken)
+    public Task<PagedResult<AttemptSummaryDto>> GetHistoryAsync(
+        Guid userId,
+        int page,
+        int pageSize,
+        AttemptHistoryFilter filter,
+        CancellationToken cancellationToken)
     {
         var query = _db.AssessmentAttempts.AsNoTracking().Where(a => a.EmployeeProfileId == userId);
+        query = ApplyHistoryFilter(query, filter);
         return PageAttemptsAsync(query, page, pageSize, cancellationToken);
+    }
+
+    private static IQueryable<AssessmentAttempt> ApplyHistoryFilter(IQueryable<AssessmentAttempt> query, AttemptHistoryFilter filter)
+    {
+        if (!string.IsNullOrWhiteSpace(filter.CompetencyId))
+            query = query.Where(a => a.CompetencyId == filter.CompetencyId);
+
+        if (!string.IsNullOrWhiteSpace(filter.TechnologyId))
+            query = query.Where(a => a.TechnologyId == filter.TechnologyId);
+
+        if (!string.IsNullOrWhiteSpace(filter.SkillLevel))
+            query = query.Where(a => a.SkillLevel == filter.SkillLevel);
+
+        if (!string.IsNullOrWhiteSpace(filter.Status)
+            && Enum.TryParse<AttemptStatus>(filter.Status, ignoreCase: true, out var status))
+            query = query.Where(a => a.Status == status);
+
+        return query;
     }
 
     public async Task<AttemptResultDto?> GetOwnDetailAsync(Guid userId, Guid attemptId, CancellationToken cancellationToken)
@@ -263,7 +312,13 @@ public class AssessmentService : IAssessmentService
     {
         var questions = attempt.Questions.OrderBy(q => q.SortOrder).Select(q =>
             new QuestionClientDto(q.Id, q.SortOrder, q.QuestionStem, DeserializeOptions(q.OptionsJson))).ToList();
-        return new AttemptInProgressDto(attempt.Id, attempt.CompetencyLabel, attempt.TechnologyLabel, attempt.SkillLevel, questions);
+        return new AttemptInProgressDto(
+            attempt.Id,
+            attempt.CompetencyLabel,
+            attempt.TechnologyLabel,
+            attempt.SkillLevel,
+            QuestionSourceParser.ToApiValue(attempt.QuestionSource),
+            questions);
     }
 
     private static AttemptResultDto MapResult(AssessmentAttempt attempt)

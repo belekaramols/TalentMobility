@@ -14,6 +14,10 @@ public interface IApplicationDbContext
     DbSet<AssessmentConfiguration> AssessmentConfigurations { get; }
     DbSet<MatchingWeightConfig> MatchingWeightConfigs { get; }
     DbSet<AuditLog> AuditLogs { get; }
+    DbSet<CatalogCompetency> CatalogCompetencies { get; }
+    DbSet<CatalogTechnology> CatalogTechnologies { get; }
+    DbSet<CatalogSkillLevel> CatalogSkillLevels { get; }
+    DbSet<CatalogQuestion> CatalogQuestions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

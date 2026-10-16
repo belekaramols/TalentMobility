@@ -47,11 +47,19 @@ public class AttemptsController : ControllerBase
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> History([FromQuery] PageQuery page, CancellationToken cancellationToken)
+    public async Task<IActionResult> History(
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = 0,
+        [FromQuery] string? status = null,
+        [FromQuery] string? competencyId = null,
+        [FromQuery] string? technologyId = null,
+        [FromQuery] string? skillLevel = null,
+        CancellationToken cancellationToken = default)
     {
         var id = _session.UserId;
         if (id is null) return Unauthorized();
-        return Ok(await _assessments.GetHistoryAsync(id.Value, page.Page, page.PageSize, cancellationToken));
+        var filter = new AttemptHistoryFilter(status, competencyId, technologyId, skillLevel);
+        return Ok(await _assessments.GetHistoryAsync(id.Value, page, pageSize, filter, cancellationToken));
     }
 
     [HttpGet("{attemptId:guid}/detail")]

@@ -64,7 +64,7 @@ public class BusinessRuleTests
     }
 
     [Theory]
-    [InlineData(0, 0, 1, 20)]
+    [InlineData(0, 0, 1, 10)]
     [InlineData(2, 500, 2, 100)]
     [InlineData(3, 25, 3, 25)]
     public void Paging_is_clamped(int page, int pageSize, int expectedPage, int expectedSize)

@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TalentMobility.Application.Constants;
+using TalentMobility.Application.Exceptions;
 using TalentMobility.Application.Interfaces;
 using TalentMobility.Application.Services;
 using TalentMobility.Infrastructure.Options;
@@ -44,13 +45,21 @@ public class GeminiQuestionGenerator
         CancellationToken cancellationToken = default)
     {
         if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey))
-            throw new InvalidOperationException(Messages.Generation.GeminiDisabledOrMissingKey);
+            throw new QuestionGenerationException(
+                Messages.Generation.GeminiDisabledOrMissingKey,
+                "gemini",
+                null,
+                retryable: false);
 
         var competency = _catalog.GetCompetencies().FirstOrDefault(c => c.Id == competencyId);
         var technology = competency?.Technologies.FirstOrDefault(t => t.Id == technologyId);
         var level = _catalog.GetSkillLevels().FirstOrDefault(l => l.Id == skillLevel);
         if (competency is null || technology is null || level is null)
-            throw new InvalidOperationException(Messages.Generation.UnknownCatalogSelection);
+            throw new QuestionGenerationException(
+                Messages.Generation.UnknownCatalogSelection,
+                "gemini",
+                null,
+                retryable: false);
 
         var prompt = BuildPrompt(competency.Label, technology.Label, level.Label, level.Description, count);
         var rawJson = await CallGeminiAsync(prompt, cancellationToken);
@@ -62,43 +71,32 @@ public class GeminiQuestionGenerator
     private async Task<string> CallGeminiAsync(string prompt, CancellationToken cancellationToken)
     {
         var model = ResolveModel();
-        var maxRetries = Math.Clamp(_options.MaxRetries, 1, 5);
-        var baseDelayMs = Math.Clamp(_options.RetryBaseDelayMilliseconds, 500, 15_000);
-        Exception? lastError = null;
-
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        try
         {
-            try
-            {
-                    return await RequestModelAsync(model, prompt, cancellationToken);
-            }
-            catch (GeminiTransientException ex) when (attempt < maxRetries)
-            {
-                lastError = ex;
-                var delay = TimeSpan.FromMilliseconds(baseDelayMs * attempt);
-                _logger.LogWarning(
-                    "Gemini {Model} transient failure ({Detail}, attempt {Attempt}/{MaxRetries}). Retrying in {DelayMs}ms.",
-                    model, ex.Message, attempt, maxRetries, (int)delay.TotalMilliseconds);
-                await Task.Delay(delay, cancellationToken);
-            }
-            catch (Exception ex) when (IsTransientTimeout(ex) && attempt < maxRetries)
-            {
-                lastError = ex;
-                var delay = TimeSpan.FromMilliseconds(baseDelayMs * attempt);
-                _logger.LogWarning(
-                    ex,
-                    "Gemini {Model} request timed out (attempt {Attempt}/{MaxRetries}, HttpClient timeout {TimeoutSeconds}s). Retrying in {DelayMs}ms.",
-                    model, attempt, maxRetries, _http.Timeout.TotalSeconds, (int)delay.TotalMilliseconds);
-                await Task.Delay(delay, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                lastError = ex;
-                break;
-            }
+            return await RequestModelAsync(model, prompt, cancellationToken);
         }
-
-        throw lastError ?? new InvalidOperationException(Messages.Generation.GeminiApiRequestFailed);
+        catch (QuestionGenerationException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or TimeoutException)
+        {
+            _logger.LogWarning(ex, "Gemini request timed out for {Model}", model);
+            throw new QuestionGenerationException(
+                Messages.Generation.GeminiApiRequestFailed,
+                "gemini",
+                (int)HttpStatusCode.RequestTimeout,
+                retryable: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Gemini request failed for {Model}", model);
+            throw new QuestionGenerationException(
+                ex.Message,
+                "gemini",
+                null,
+                retryable: false);
+        }
     }
 
     private string ResolveModel()
@@ -122,35 +120,30 @@ public class GeminiQuestionGenerator
         };
 
         using var response = await _http.SendAsync(request, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             var apiMessage = TryReadApiMessage(body);
-            if (IsTransientStatus(response.StatusCode))
-                throw new GeminiTransientException((int)response.StatusCode, apiMessage);
-
-            _logger.LogWarning("Gemini API returned {StatusCode} for {Model}: {Message}", (int)response.StatusCode, model, apiMessage);
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(apiMessage) ? Messages.Generation.GeminiApiRequestFailed : apiMessage);
+            var message = string.IsNullOrWhiteSpace(apiMessage) ? Messages.Generation.GeminiApiRequestFailed : apiMessage;
+            var retryable = IsRetryableStatus(response.StatusCode);
+            _logger.LogWarning("Gemini API returned {StatusCode} for {Model}: {Message}", (int)response.StatusCode, model, message);
+            throw new QuestionGenerationException(message, "gemini", (int)response.StatusCode, retryable);
         }
 
         var envelope = JsonSerializer.Deserialize<GeminiResponseEnvelope>(body, JsonOptions)
-            ?? throw new InvalidOperationException(Messages.Generation.GeminiEmptyResponse);
+            ?? throw new QuestionGenerationException(Messages.Generation.GeminiEmptyResponse, "gemini", null, retryable: false);
         var text = envelope.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
         if (string.IsNullOrWhiteSpace(text))
-            throw new InvalidOperationException(Messages.Generation.GeminiNoGeneratedText);
+            throw new QuestionGenerationException(Messages.Generation.GeminiNoGeneratedText, "gemini", null, retryable: false);
         return text;
     }
 
-    private static bool IsTransientStatus(HttpStatusCode statusCode) =>
+    private static bool IsRetryableStatus(HttpStatusCode statusCode) =>
         statusCode is HttpStatusCode.TooManyRequests
             or HttpStatusCode.ServiceUnavailable
             or HttpStatusCode.BadGateway
             or HttpStatusCode.GatewayTimeout
             or HttpStatusCode.InternalServerError;
-
-    private static bool IsTransientTimeout(Exception ex) =>
-        ex is TaskCanceledException or TimeoutException
-        || ex.InnerException is TimeoutException;
 
     private static string? TryReadApiMessage(string body)
     {
@@ -211,18 +204,21 @@ public class GeminiQuestionGenerator
                 json = json[(firstLine + 1)..lastFence].Trim();
         }
 
-        var batch = JsonSerializer.Deserialize<GeminiQuestionBatch>(json, JsonOptions)
-            ?? throw new InvalidOperationException(Messages.Generation.GeminiJsonNotParsed);
-        if (batch.Questions is null || batch.Questions.Count == 0)
-            throw new InvalidOperationException(Messages.Generation.GeminiNoQuestions);
-        return batch;
-    }
-
-    private sealed class GeminiTransientException : Exception
-    {
-        public GeminiTransientException(int statusCode, string? message)
-            : base(string.IsNullOrWhiteSpace(message) ? Messages.Generation.GeminiHttpStatus(statusCode) : message)
+        try
         {
+            var batch = JsonSerializer.Deserialize<GeminiQuestionBatch>(json, JsonOptions)
+                ?? throw new QuestionGenerationException(Messages.Generation.GeminiJsonNotParsed, "gemini", null, retryable: false);
+            if (batch.Questions is null || batch.Questions.Count == 0)
+                throw new QuestionGenerationException(Messages.Generation.GeminiNoQuestions, "gemini", null, retryable: false);
+            return batch;
+        }
+        catch (QuestionGenerationException)
+        {
+            throw;
+        }
+        catch (JsonException)
+        {
+            throw new QuestionGenerationException(Messages.Generation.GeminiJsonNotParsed, "gemini", null, retryable: false);
         }
     }
 

@@ -1,15 +1,14 @@
-using TalentMobility.Application.Dtos;
+using TalentMobility.Domain.Enums;
 
 namespace TalentMobility.Application.Interfaces;
 
-public interface IQuestionGenerator
+public interface IQuestionGenerationService
 {
     Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
         string competencyId,
         string technologyId,
         string skillLevel,
         int count,
+        QuestionSourceMode source,
         CancellationToken cancellationToken = default);
 }
-
-public record GeneratedQuestion(string Stem, IReadOnlyList<string> Options, int CorrectIndex);

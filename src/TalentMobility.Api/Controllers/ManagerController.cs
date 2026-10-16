@@ -40,20 +40,27 @@ public class ManagerController : ControllerBase
     }
 
     [HttpGet("employees")]
-    public async Task<IActionResult> Employees([FromQuery] PageQuery page, CancellationToken cancellationToken)
+    public async Task<IActionResult> Employees(
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = 0,
+        CancellationToken cancellationToken = default)
     {
         var id = RequireUser();
         if (id is null) return Unauthorized();
-        return Ok(await _manager.GetEmployeesAsync(id.Value, _session.IsPlatformAdmin, page.Page, page.PageSize, cancellationToken));
+        return Ok(await _manager.GetEmployeesAsync(id.Value, _session.IsPlatformAdmin, page, pageSize, cancellationToken));
     }
 
     [HttpGet("employees/{employeeId:guid}/attempts")]
-    public async Task<IActionResult> EmployeeAttempts(Guid employeeId, [FromQuery] PageQuery page, CancellationToken cancellationToken)
+    public async Task<IActionResult> EmployeeAttempts(
+        Guid employeeId,
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = 0,
+        CancellationToken cancellationToken = default)
     {
         var id = RequireUser();
         if (id is null) return Unauthorized();
         if (await DenyOutsideTeam(employeeId) is { } denied) return denied;
-        return Ok(await _assessments.GetTeamHistoryAsync(id.Value, employeeId, _session.IsPlatformAdmin, page.Page, page.PageSize, cancellationToken));
+        return Ok(await _assessments.GetTeamHistoryAsync(id.Value, employeeId, _session.IsPlatformAdmin, page, pageSize, cancellationToken));
     }
 
     [HttpGet("employees/{employeeId:guid}/attempts/{attemptId:guid}/detail")]
@@ -83,8 +90,11 @@ public class ManagerController : ControllerBase
         Ok(await _assignments.UpdateConfigAsync(request, cancellationToken));
 
     [HttpGet("audit")]
-    public async Task<IActionResult> Audit([FromQuery] PageQuery page, CancellationToken cancellationToken) =>
-        Ok(await _manager.GetAuditAsync(page.Page, page.PageSize, cancellationToken));
+    public async Task<IActionResult> Audit(
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = 0,
+        CancellationToken cancellationToken = default) =>
+        Ok(await _manager.GetAuditAsync(page, pageSize, cancellationToken));
 
     private Guid? RequireUser() => _session.UserId;
 

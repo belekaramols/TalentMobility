@@ -35,6 +35,28 @@ talent-mobility-platform/
 
 Use your environment’s server name and catalog; do not commit production secrets.
 
+## Pagination
+
+**API** — `src/TalentMobility.Api/appsettings.json`:
+
+```json
+"Pagination": {
+  "DefaultPageSize": 10,
+  "MaxPageSize": 100
+}
+```
+
+Omit `pageSize` on list endpoints (or send `0`) to use `DefaultPageSize`.
+
+**Web** — copy `src/TalentMobility.Web/.env.example` to `.env` and set:
+
+```env
+VITE_DEFAULT_PAGE_SIZE=10
+VITE_HISTORY_PAGE_SIZE=10
+```
+
+Restart the Vite dev server after changing `.env`.
+
 ## Run locally
 
 ```powershell
@@ -65,9 +87,9 @@ dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY_HERE"
 
 3. Uses **`gemini-3.8-flash` only** (`Gemini:Model` in `appsettings.json`).
 
-4. **Timeouts / 503:** Each request allows up to `Gemini:TimeoutSeconds` (default **180**). Transient errors and HTTP timeouts are retried (`MaxRetries`, default **3**). If Gemini still fails, template questions are used so the assessment can start.
+4. **Timeouts / errors:** Each request allows up to `Gemini:TimeoutSeconds` (default **180**). There is **no server-side retry loop**; the UI shows the provider message and lets the user **retry AI** or start with **configured questions** from the database bank.
 
-5. Optional: disable Gemini to always use template questions:
+5. Optional: disable Gemini (users must choose the configured question bank):
 
 ```json
 "Gemini": { "Enabled": false }
@@ -86,9 +108,10 @@ For many questions per attempt (for example 30–50), increase `TimeoutSeconds` 
 ## Features implemented
 
 - Role-based navigation (employee / manager)
-- Assessment wizard: **Competency → Technology → Skill level**
+- Assessment catalog (**competencies**, **technologies/courses**, **skill levels**) and **question bank** in SQL (seeded from `assessment-catalog.json` on first run)
+- Assessment wizard: **Competency → Technology → Skill level** with AI or bank question source
 - Configurable questions per attempt (manager **Assessment configuration**, default 10)
-- **Gemini**-powered question generation with template fallback via `IQuestionGenerator`
+- **Gemini** question generation (`questionSource: "ai"`) or DB bank (`questionSource: "bank"`)
 - **Full attempt history** with per-question correct/incorrect in SQL (`AttemptQuestions`)
 - **Manager manual test assignment** + configuration toggle
 - Manager team dashboard, audit log, matching weights

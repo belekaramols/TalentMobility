@@ -12,4 +12,7 @@ public static class AppLimits
     public const int MaxPasswordLength = 128;
     public const int MinDefaultDueDays = 1;
     public const int MaxDefaultDueDays = 365;
+
+    /// <summary>Default number of bank questions seeded per competency, technology, and skill level.</summary>
+    public const int SeedQuestionsPerBankCombo = 12;
 }

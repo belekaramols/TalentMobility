@@ -21,11 +21,14 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> MyAssignments([FromQuery] PageQuery page, CancellationToken cancellationToken)
+    public async Task<IActionResult> MyAssignments(
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = 0,
+        CancellationToken cancellationToken = default)
     {
         var id = _session.UserId;
         if (id is null) return Unauthorized();
-        return Ok(await _assignments.GetForEmployeeAsync(id.Value, page.Page, page.PageSize, cancellationToken));
+        return Ok(await _assignments.GetForEmployeeAsync(id.Value, page, pageSize, cancellationToken));
     }
 }
 

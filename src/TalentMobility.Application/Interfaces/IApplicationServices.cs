@@ -19,7 +19,12 @@ public interface IAssessmentService
     Task<AttemptInProgressDto?> StartAttemptAsync(Guid userId, StartAttemptRequest request, CancellationToken cancellationToken);
     Task<AttemptInProgressDto?> GetAttemptAsync(Guid userId, Guid attemptId, CancellationToken cancellationToken);
     Task<AttemptResultDto?> SubmitAsync(Guid userId, Guid attemptId, SubmitAttemptRequest request, CancellationToken cancellationToken);
-    Task<PagedResult<AttemptSummaryDto>> GetHistoryAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken);
+    Task<PagedResult<AttemptSummaryDto>> GetHistoryAsync(
+        Guid userId,
+        int page,
+        int pageSize,
+        AttemptHistoryFilter filter,
+        CancellationToken cancellationToken);
     Task<AttemptResultDto?> GetOwnDetailAsync(Guid userId, Guid attemptId, CancellationToken cancellationToken);
     Task<PagedResult<AttemptSummaryDto>> GetTeamHistoryAsync(Guid managerId, Guid employeeId, bool isPlatformAdmin, int page, int pageSize, CancellationToken cancellationToken);
     Task<AttemptResultDto?> GetTeamDetailAsync(Guid managerId, Guid employeeId, Guid attemptId, bool isPlatformAdmin, CancellationToken cancellationToken);

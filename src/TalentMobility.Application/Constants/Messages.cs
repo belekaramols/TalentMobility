@@ -30,6 +30,11 @@ public static partial class Messages
 
         public static string RetakeLimitReached(int maxRetakes) =>
             $"You have reached the maximum of {maxRetakes} completed attempts for this skill.";
+
+        public const string InvalidQuestionSource = "Question source must be ai or bank.";
+
+        public static string InsufficientBankQuestions(int required, int available) =>
+            $"Configured question bank has {available} question(s) but {required} are required for this assessment.";
     }
 
     public static class Audit
@@ -48,6 +53,7 @@ public static partial class Messages
         public const string UnexpectedError = "An unexpected error occurred.";
         public const string AuthenticationRequired = "Authentication is required.";
         public const string AntiforgeryValidationFailed = "The request could not be validated.";
+        public const string QuestionGenerationFailed = "Assessment questions could not be generated.";
     }
 
     public static class Generation

@@ -43,6 +43,19 @@ public class ApiBehaviorTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task History_honors_page_and_page_size_query_parameters()
+    {
+        var session = await ApiSession.Open(_factory);
+        await session.Login("amol.belekar@tothenew.com");
+        var history = await session.Client.GetFromJsonAsync<PagedHistory>(
+            "/api/attempts/me?page=2&pageSize=2",
+            TestJson.Options);
+        Assert.NotNull(history);
+        Assert.Equal(2, history!.Page);
+        Assert.Equal(2, history.PageSize);
+    }
+
+    [Fact]
     public async Task Employee_cannot_call_manager_endpoints()
     {
         var session = await ApiSession.Open(_factory);
@@ -245,9 +258,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Gemini:Enabled", "false");
         builder.ConfigureTestServices(services =>
         {
-            foreach (var registration in services.Where(service => service.ServiceType == typeof(IQuestionGenerator)).ToList())
+            foreach (var registration in services.Where(service => service.ServiceType == typeof(IQuestionGenerationService)).ToList())
                 services.Remove(registration);
-            services.AddSingleton<IQuestionGenerator, DeterministicTestQuestionGenerator>();
+            services.AddSingleton<IQuestionGenerationService, DeterministicTestQuestionGenerator>();
 
             var registrations = services.Where(service =>
                 service.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
@@ -320,6 +333,7 @@ public sealed record AttemptPayload(Guid Id, List<QuestionPayload> Questions);
 public sealed record QuestionPayload(Guid Id);
 public sealed record AttemptResultPayload(int Score, int MaxScore, int CorrectCount);
 public sealed record PagedAttempts(List<AttemptItem> Items);
+public sealed record PagedHistory(List<AttemptItem> Items, int Page, int PageSize, int TotalCount);
 public sealed record AttemptItem(Guid Id, string Status);
 public sealed record PagedAssignments(List<AssignmentItem> Items);
 public sealed record AssignmentItem(

@@ -1,3 +1,4 @@
+import { appConfig } from "../config/appConfig";
 import { messages } from "../config/messages";
 
 const base = "";
@@ -9,6 +10,11 @@ export type ProblemDetails = {
   status?: number;
   traceId?: string;
   errors?: Record<string, string[]>;
+  code?: string;
+  source?: string;
+  retryable?: boolean;
+  canUseBank?: boolean;
+  providerStatus?: number;
 };
 
 export class ApiError extends Error {
@@ -19,6 +25,22 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+
+  get isQuestionGenerationFailure() {
+    return this.problem?.code === "question_generation_failed";
+  }
+
+  get aiDetail() {
+    return this.problem?.detail ?? this.message;
+  }
+
+  get retryable() {
+    return this.problem?.retryable === true;
+  }
+
+  get canUseBank() {
+    return this.problem?.canUseBank === true;
   }
 }
 
@@ -77,6 +99,10 @@ export const api = {
   navigation: () => request<NavGroup[]>("/api/navigation"),
   competencies: () => request<Competency[]>("/api/catalog/competencies"),
   skillLevels: () => request<SkillLevel[]>("/api/catalog/skill-levels"),
+  bankAvailability: (competencyId: string, technologyId: string, skillLevel: string) =>
+    request<BankAvailability>(
+      `/api/catalog/bank-availability?competencyId=${encodeURIComponent(competencyId)}&technologyId=${encodeURIComponent(technologyId)}&skillLevel=${encodeURIComponent(skillLevel)}`,
+    ),
   startAttempt: (body: StartAttemptBody) =>
     request<AttemptInProgress>("/api/attempts/start", { method: "POST", body: JSON.stringify(body) }),
   getAttempt: (id: string) => request<AttemptInProgress>(`/api/attempts/${id}`),
@@ -85,10 +111,30 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ answers }),
     }),
-  history: (page = 1, pageSize = 20) => request<Paged<AttemptSummary>>(`/api/attempts/me?page=${page}&pageSize=${pageSize}`),
+  history: (
+    page = 1,
+    pageSize = appConfig.pagination.historyPageSize,
+    filters?: {
+      status?: string;
+      competencyId?: string;
+      technologyId?: string;
+      skillLevel?: string;
+    },
+  ) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    if (filters?.status && filters.status !== "All") params.set("status", filters.status);
+    if (filters?.competencyId) params.set("competencyId", filters.competencyId);
+    if (filters?.technologyId) params.set("technologyId", filters.technologyId);
+    if (filters?.skillLevel) params.set("skillLevel", filters.skillLevel);
+    return request<Paged<AttemptSummary>>(`/api/attempts/me?${params.toString()}`);
+  },
   attemptDetail: (id: string) => request<AttemptResult>(`/api/attempts/${id}/detail`),
   profile: () => request<EmployeeProfile>("/api/profile/me"),
-  assignments: (page = 1, pageSize = 20) => request<Paged<Assignment>>(`/api/assignments/me?page=${page}&pageSize=${pageSize}`),
+  assignments: (page = 1, pageSize = appConfig.pagination.defaultPageSize) =>
+    request<Paged<Assignment>>(`/api/assignments/me?page=${page}&pageSize=${pageSize}`),
   managerDashboard: () => request<ManagerDashboard>("/api/manager/dashboard"),
   managerEmployees: (page = 1, pageSize = 20) => request<Paged<EmployeeListItem>>(`/api/manager/employees?page=${page}&pageSize=${pageSize}`),
   managerEmployeeAttempts: (id: string, page = 1, pageSize = 20) =>
@@ -121,17 +167,28 @@ export type CurrentUser = {
 export type NavGroup = { label: string; items: { label: string; path: string; isEnabled: boolean }[] };
 export type Competency = { id: string; label: string; technologies: { id: string; label: string }[] };
 export type SkillLevel = { id: string; label: string; description: string };
+export type QuestionSource = "ai" | "bank";
+
 export type StartAttemptBody = {
   competencyId: string;
   technologyId: string;
   skillLevel: string;
   assignmentId?: string;
+  questionSource?: QuestionSource;
 };
+
+export type BankAvailability = {
+  availableCount: number;
+  requiredCount: number;
+  sufficient: boolean;
+};
+
 export type AttemptInProgress = {
   id: string;
   competencyLabel: string;
   technologyLabel: string;
   skillLevel: string;
+  questionSource: QuestionSource;
   questions: { id: string; sortOrder: number; stem: string; options: string[] }[];
 };
 export type AttemptResult = {

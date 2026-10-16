@@ -4,7 +4,16 @@ public record StartAttemptRequest(
     string CompetencyId,
     string TechnologyId,
     string SkillLevel,
-    Guid? AssignmentId);
+    Guid? AssignmentId,
+    string QuestionSource = "ai");
+
+public record BankAvailabilityDto(int AvailableCount, int RequiredCount, bool Sufficient);
+
+public record AttemptHistoryFilter(
+    string? Status = null,
+    string? CompetencyId = null,
+    string? TechnologyId = null,
+    string? SkillLevel = null);
 
 public record AttemptSummaryDto(
     Guid Id,
@@ -25,6 +34,7 @@ public record AttemptInProgressDto(
     string CompetencyLabel,
     string TechnologyLabel,
     string SkillLevel,
+    string QuestionSource,
     IReadOnlyList<QuestionClientDto> Questions);
 
 public record SubmitAttemptRequest(IReadOnlyList<AnswerSubmissionDto> Answers);

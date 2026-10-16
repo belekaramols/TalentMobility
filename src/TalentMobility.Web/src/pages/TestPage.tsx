@@ -66,7 +66,14 @@ export function TestPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <Badge variant="secondary">{attempt.data.skillLevel}</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">{attempt.data.skillLevel}</Badge>
+            <Badge variant="outline">
+              {attempt.data.questionSource === "bank"
+                ? messages.questionGeneration.bankBadge
+                : messages.questionGeneration.aiBadge}
+            </Badge>
+          </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">{attempt.data.technologyLabel} assessment</h1>
           <p className="mt-1 text-sm text-muted-foreground">{attempt.data.competencyLabel} · Question {index + 1} of {total}</p>
         </div>

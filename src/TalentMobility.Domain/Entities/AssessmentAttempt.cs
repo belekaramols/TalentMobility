@@ -15,6 +15,7 @@ public class AssessmentAttempt
     public int MaxScore { get; set; } = 10;
     public AttemptStatus Status { get; set; }
     public AttemptSource Source { get; set; }
+    public QuestionSourceMode QuestionSource { get; set; }
     public Guid? AssignedByEmployeeId { get; set; }
     public Guid? TestAssignmentId { get; set; }
     public DateTime StartedAtUtc { get; set; }

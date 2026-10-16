@@ -17,6 +17,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<AssessmentConfiguration> AssessmentConfigurations => Set<AssessmentConfiguration>();
     public DbSet<MatchingWeightConfig> MatchingWeightConfigs => Set<MatchingWeightConfig>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<CatalogCompetency> CatalogCompetencies => Set<CatalogCompetency>();
+    public DbSet<CatalogTechnology> CatalogTechnologies => Set<CatalogTechnology>();
+    public DbSet<CatalogSkillLevel> CatalogSkillLevels => Set<CatalogSkillLevel>();
+    public DbSet<CatalogQuestion> CatalogQuestions => Set<CatalogQuestion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,5 +83,42 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             e.Property(x => x.CertificationPercent).HasPrecision(5, 2);
         });
         modelBuilder.Entity<AuditLog>(e => e.ToTable("AuditLogs"));
+
+        modelBuilder.Entity<CatalogCompetency>(e =>
+        {
+            e.ToTable("CatalogCompetencies");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasMaxLength(64);
+            e.Property(x => x.Label).HasMaxLength(128);
+        });
+
+        modelBuilder.Entity<CatalogTechnology>(e =>
+        {
+            e.ToTable("CatalogTechnologies");
+            e.HasKey(x => new { x.CompetencyId, x.Id });
+            e.Property(x => x.Id).HasMaxLength(64);
+            e.Property(x => x.CompetencyId).HasMaxLength(64);
+            e.Property(x => x.Label).HasMaxLength(128);
+            e.HasOne(x => x.Competency).WithMany(x => x.Technologies).HasForeignKey(x => x.CompetencyId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CatalogSkillLevel>(e =>
+        {
+            e.ToTable("CatalogSkillLevels");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasMaxLength(64);
+            e.Property(x => x.Label).HasMaxLength(64);
+            e.Property(x => x.Description).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<CatalogQuestion>(e =>
+        {
+            e.ToTable("CatalogQuestions");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.CompetencyId).HasMaxLength(64);
+            e.Property(x => x.TechnologyId).HasMaxLength(64);
+            e.Property(x => x.SkillLevelId).HasMaxLength(64);
+            e.HasIndex(x => new { x.CompetencyId, x.TechnologyId, x.SkillLevelId, x.IsActive });
+        });
     }
 }

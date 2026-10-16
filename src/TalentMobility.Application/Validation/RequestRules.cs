@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using TalentMobility.Application.Constants;
+using TalentMobility.Application.Options;
 using TalentMobility.Application.Dtos;
 using TalentMobility.Application.Exceptions;
 using TalentMobility.Application.Services;
@@ -8,18 +9,15 @@ namespace TalentMobility.Application.Validation;
 
 public static class Paging
 {
-    public const int DefaultPageSize = 20;
-    public const int MaxPageSize = 100;
-
     public static (int Page, int PageSize) Normalize(int page, int pageSize)
     {
+        var settings = PaginationOptionsAccessor.Value;
         var normalizedPage = page < 1 ? 1 : page;
-        var normalizedSize = pageSize switch
-        {
-            < 1 => DefaultPageSize,
-            > MaxPageSize => MaxPageSize,
-            _ => pageSize
-        };
+        var normalizedSize = pageSize < 1
+            ? settings.DefaultPageSize
+            : pageSize > settings.MaxPageSize
+                ? settings.MaxPageSize
+                : pageSize;
         return (normalizedPage, normalizedSize);
     }
 }
@@ -51,6 +49,8 @@ public static class RequestRules
         RequireId(errors, "skillLevel", request.SkillLevel);
         if (request.AssignmentId is Guid assignmentId && assignmentId == Guid.Empty)
             errors["assignmentId"] = [Messages.Validation.InvalidAssignmentId];
+        if (!QuestionSourceParser.TryParse(request.QuestionSource, out _))
+            errors["questionSource"] = [Messages.Validation.InvalidQuestionSource];
         return errors;
     }
 

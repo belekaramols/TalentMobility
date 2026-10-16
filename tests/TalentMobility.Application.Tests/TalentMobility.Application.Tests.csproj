@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\TalentMobility.Application\TalentMobility.Application.csproj" />
+    <ProjectReference Include="..\..\src\TalentMobility.Infrastructure\TalentMobility.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
